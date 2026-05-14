@@ -2,247 +2,280 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VeredasApp — Gestión de Obras</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VeredasApp Pro</title>
     
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2311/2311417.png">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --font-sans: 'Inter', sans-serif;
-            --color-background-primary: #ffffff;
-            --color-background-secondary: #f9fafb;
-            --color-text-primary: #111827;
-            --color-text-secondary: #4b5563;
-            --color-border-tertiary: #e5e7eb;
-            --border-radius-md: 8px;
-            --border-radius-lg: 12px;
-        }
+        :root { --primary: #1D9E75; --bg: #f4f7f6; --dark: #1f2937; --radius: 12px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--dark); }
+        .app-shell { max-width: 500px; margin: 0 auto; min-height: 100vh; background: white; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.1); }
+        .screen { display: none; flex-direction: column; flex: 1; animation: fadeIn 0.2s ease; }
+        .screen.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:var(--font-sans);background:#f3f4f6;color:var(--color-text-primary)}
-        .app{max-width:500px;margin:0 auto;min-height:100vh;background:var(--color-background-primary);display:flex;flex-direction:column;box-shadow:0 0 20px rgba(0,0,0,0.05)}
-        .screen{display:none;flex-direction:column;flex:1}
-        .screen.active{display:flex}
-
-        /* Login */
-        .login-wrap{display:flex;align-items:center;justify-content:center;flex:1;background:var(--color-background-secondary)}
-        .login-box{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:2rem;width:90%}
-        .login-logo{text-align:center;margin-bottom:1.5rem}
-        .logo-icon{width:52px;height:52px;background:#1D9E75;border-radius:var(--border-radius-md);display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;color:#fff;font-size:26px}
-        .login-title{font-size:18px;font-weight:600;margin-bottom:4px}
-        .login-field{margin-bottom:1rem}
-        .login-field label{display:block;font-size:13px;color:var(--color-text-secondary);margin-bottom:6px}
-        .login-field input{width:100%;padding:10px;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)}
-        .login-btn{width:100%;padding:12px;background:#1D9E75;color:#fff;border:none;border-radius:var(--border-radius-md);font-weight:600;cursor:pointer}
-        .login-err{color:#E24B4A;font-size:12px;margin-top:8px;text-align:center;min-height:18px}
-
-        /* Topbar */
-        .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid var(--color-border-tertiary)}
-        .topbar-logo{width:32px;height:32px;background:#1D9E75;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff}
-        .btn-logout{font-size:12px;color:var(--color-text-secondary);background:none;border:1px solid var(--color-border-tertiary);padding:5px 10px;border-radius:6px;cursor:pointer}
-
-        /* Main Content */
-        .main{flex:1;overflow-y:auto;padding:16px}
-        .tabs{display:flex;gap:10px;margin-bottom:16px;border-bottom:1px solid var(--color-border-tertiary)}
-        .tab-btn{padding:8px 12px;background:none;border:none;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent}
-        .tab-btn.active{color:#1D9E75;border-bottom-color:#1D9E75;font-weight:600}
-        .tab-panel{display:none}.tab-panel.active{display:block}
-
-        /* Obras & Cards */
-        .obra-card{background:#fff;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:10px;cursor:pointer}
-        .obra-status{font-size:11px;padding:2px 8px;border-radius:20px;text-transform:capitalize}
-        .st-activa{background:#E1F5EE;color:#0F6E56}
-        .st-pendiente{background:#FAEEDA;color:#854F0B}
+        header { padding: 18px 20px; background: white; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+        .container { padding: 20px; flex: 1; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: #f3f4f6; color: var(--dark); margin-top: 10px; }
         
-        /* Modales */
-        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100}
-        .modal-overlay.open{display:flex}
-        .modal{background:#fff;padding:20px;border-radius:12px;width:90%;max-width:400px}
+        input, select { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #e5e7eb; border-radius: var(--radius); font-size: 16px; background: #f9fafb; }
+
+        .obra-btn { background: white; border: 1px solid #e5e7eb; border-radius: var(--radius); padding: 18px; margin-bottom: 15px; text-align: left; cursor: pointer; width: 100%; }
         
-        /* Toast */
-        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1D9E75;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;opacity:0;transition:0.3s;pointer-events:none}
-        .toast.show{opacity:1}
+        .map-container { width: 100%; height: 180px; border-radius: var(--radius); overflow: hidden; margin: 15px 0; border: 1px solid #ddd; }
+        .map-container iframe { width: 100%; height: 100%; border: 0; }
+
+        .mat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .mat-card { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 10px; }
+        .mat-val { display: block; font-size: 16px; font-weight: 800; color: var(--primary); }
+        .mat-label { font-size: 9px; color: #166534; font-weight: 600; text-transform: uppercase; }
+
+        .photo-tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .p-tab { flex: 1; padding: 10px; text-align: center; font-size: 12px; background: #eee; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .p-tab.active { background: var(--primary); color: white; }
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
+        .photo-item { width: 100%; aspect-ratio: 1; background: #eee; border-radius: 8px; object-fit: cover; border: 1px solid #ddd; }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: flex-end; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; width: 100%; max-width: 500px; margin: 0 auto; padding: 25px; border-radius: 24px 24px 0 0; }
+
+        /* Loader para fotos */
+        #loader { display:none; font-size: 12px; color: var(--primary); text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="app">
-    <div class="screen active" id="s-login">
-        <div class="login-wrap">
-            <div class="login-box">
-                <div class="login-logo">
-                    <div class="logo-icon"><i class="ti ti-road"></i></div>
-                    <div class="login-title">VeredasApp</div>
-                </div>
-                <div class="login-field"><label>Usuario</label><input type="text" id="inp-user" placeholder="admin"></div>
-                <div class="login-field"><label>Contraseña</label><input type="password" id="inp-pass" placeholder="admin123"></div>
-                <button class="login-btn" onclick="doLogin()">Ingresar</button>
-                <div class="login-err" id="login-err"></div>
-            </div>
+<div class="app-shell">
+    <div class="screen active" id="scr-login">
+        <div class="container" style="text-align:center; padding-top:80px;">
+            <div style="width:70px; height:70px; background:var(--primary); border-radius:20px; display:inline-flex; align-items:center; justify-content:center; color:white; font-size:35px; margin-bottom:15px;"><i class="ti ti-road"></i></div>
+            <h1 style="margin-bottom:30px;">VeredasApp</h1>
+            <input type="text" id="log-user" placeholder="Usuario">
+            <input type="password" id="log-pass" placeholder="Contraseña">
+            <button class="btn btn-primary" onclick="login()">Entrar</button>
         </div>
     </div>
 
-    <div class="screen" id="s-admin">
-        <div class="topbar">
-            <div style="display:flex;align-items:center;gap:8px">
-                <div class="topbar-logo"><i class="ti ti-road"></i></div>
-                <span style="font-weight:600">Panel Admin</span>
-            </div>
-            <button class="btn-logout" onclick="location.reload()">Salir</button>
+    <div class="screen" id="scr-admin">
+        <header><strong>Panel Admin</strong> <i class="ti ti-logout" onclick="location.reload()"></i></header>
+        <div class="container">
+            <button class="btn btn-primary" onclick="openModal('mod-obra')" style="margin-bottom:10px;">+ Nueva Obra</button>
+            <button class="btn btn-outline" onclick="openModal('mod-cap')" style="margin-bottom:20px;">+ Nuevo Capataz</button>
+            <div id="lista-obras"></div>
         </div>
-        <div class="main">
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('obras')">Obras</button>
-                <button class="tab-btn" onclick="switchTab('capataces')">Capataces</button>
-            </div>
-            <div id="tab-obras" class="tab-panel active">
-                <button onclick="openModal('modal-obra')" style="width:100%;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px;margin-bottom:15px">+ Nueva Obra</button>
-                <div id="obras-grid"></div>
-            </div>
-            <div id="tab-capataces" class="tab-panel">
-                <button onclick="openModal('modal-cap')" style="width:100%;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px;margin-bottom:15px">+ Nuevo Capataz</button>
-                <div id="cap-list"></div>
-            </div>
+    </div>
+
+    <div class="screen" id="scr-cap">
+        <header><strong id="cap-name-header">Capataz</strong> <i class="ti ti-logout" onclick="location.reload()"></i></header>
+        <div class="container">
+            <h3>Mis Obras Asignadas</h3><br>
+            <div id="lista-obras-cap"></div>
         </div>
+    </div>
+
+    <div class="screen" id="scr-detalle">
+        <header><i class="ti ti-arrow-left" onclick="back()"></i> <strong>Detalle de Obra</strong> <div></div></header>
+        <div class="container" id="detalle-content"></div>
     </div>
 </div>
 
-<div class="modal-overlay" id="modal-obra">
-    <div class="modal">
-        <h3>Nueva Obra</h3><br>
-        <input type="text" id="m-dir" placeholder="Dirección" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
-        <input type="number" id="m-mts" placeholder="Metros m²" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
-        <select id="m-cap" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px"></select>
-        <div style="display:flex;gap:10px">
-            <button onclick="closeModal('modal-obra')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">Cancelar</button>
-            <button onclick="saveObra()" style="flex:1;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px">Guardar</button>
-        </div>
+<div class="modal" id="mod-obra">
+    <div class="modal-content">
+        <h3>Cargar Nueva Obra</h3><br>
+        <input type="text" id="o-dir" placeholder="Dirección exacta">
+        <input type="number" id="o-mts" placeholder="Metros cuadrados (m²)">
+        <select id="o-cap-sel"></select>
+        <button class="btn btn-primary" onclick="crearObra()">Guardar Obra</button>
+        <button class="btn btn-outline" onclick="closeModal('mod-obra')">Cancelar</button>
     </div>
 </div>
 
-<div class="modal-overlay" id="modal-cap">
-    <div class="modal">
-        <h3>Nuevo Capataz</h3><br>
-        <input type="text" id="c-nombre" placeholder="Nombre Completo" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
-        <input type="text" id="c-user" placeholder="Usuario" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
-        <input type="password" id="c-pass" placeholder="Contraseña" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
-        <div style="display:flex;gap:10px">
-            <button onclick="closeModal('modal-cap')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">Cancelar</button>
-            <button onclick="saveCap()" style="flex:1;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px">Guardar</button>
-        </div>
+<div class="modal" id="mod-cap">
+    <div class="modal-content">
+        <h3>Registrar Capataz</h3><br>
+        <input type="text" id="c-nom" placeholder="Nombre completo">
+        <input type="text" id="c-usr" placeholder="Usuario">
+        <input type="password" id="c-pwd" placeholder="Contraseña">
+        <button class="btn btn-primary" onclick="crearCap()">Guardar Capataz</button>
+        <button class="btn btn-outline" onclick="closeModal('mod-cap')">Cancelar</button>
     </div>
 </div>
-
-<div class="toast" id="toast">Acción realizada</div>
 
 <script>
-const KEY_OBRAS = 'v-obras';
-const KEY_CAPS = 'v-caps';
+    let db = JSON.parse(localStorage.getItem('vapp_db_v3')) || { obras: [], caps: [] };
+    let currentUser = null;
+    let currentFase = 'antes';
 
-let state = {
-    obras: JSON.parse(localStorage.getItem(KEY_OBRAS)) || [],
-    capataces: JSON.parse(localStorage.getItem(KEY_CAPS)) || []
-};
-
-// --- PERSISTENCIA CORREGIDA ---
-function persist() {
-    localStorage.setItem(KEY_OBRAS, JSON.stringify(state.obras));
-    localStorage.setItem(KEY_CAPS, JSON.stringify(state.capataces));
-}
-
-function doLogin() {
-    const u = document.getElementById('inp-user').value;
-    const p = document.getElementById('inp-pass').value;
-    if(u === 'admin' && p === 'admin123') {
-        document.getElementById('s-login').classList.remove('active');
-        document.getElementById('s-admin').classList.add('active');
-        renderObras();
-    } else {
-        document.getElementById('login-err').textContent = "Credenciales incorrectas";
+    function save() { 
+        try {
+            localStorage.setItem('vapp_db_v3', JSON.stringify(db)); 
+        } catch(e) {
+            alert("Memoria llena. Intenta borrar algunas obras antiguas.");
+        }
     }
-}
 
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
-    if(tab === 'obras') renderObras();
-    if(tab === 'capataces') renderCaps();
-}
+    function login() {
+        const u = document.getElementById('log-user').value;
+        const p = document.getElementById('log-pass').value;
+        if(u === 'admin' && p === 'admin123') {
+            currentUser = { type: 'admin' };
+            showScreen('scr-admin'); renderObras();
+        } else {
+            const cap = db.caps.find(c => c.usr === u && c.pwd === p);
+            if(cap) {
+                currentUser = { type: 'cap', ...cap };
+                document.getElementById('cap-name-header').innerText = cap.nom;
+                showScreen('scr-cap'); renderObrasCap();
+            } else { alert("Acceso denegado"); }
+        }
+    }
 
-function renderObras() {
-    const grid = document.getElementById('obras-grid');
-    grid.innerHTML = state.obras.map(o => `
-        <div class="obra-card">
-            <div style="display:flex;justify-content:space-between">
-                <strong>${o.dir}</strong>
-                <span class="obra-status st-activa">Activa</span>
+    function crearCap() {
+        const nom = document.getElementById('c-nom').value;
+        const usr = document.getElementById('c-usr').value;
+        const pwd = document.getElementById('c-pwd').value;
+        if(!nom || !usr || !pwd) return;
+        db.caps.push({ nom, usr, pwd }); save(); closeModal('mod-cap');
+    }
+
+    function crearObra() {
+        const dir = document.getElementById('o-dir').value;
+        const mts = document.getElementById('o-mts').value;
+        const cap = document.getElementById('o-cap-sel').value;
+        if(!dir || !mts) return;
+        db.obras.push({ id: Date.now(), dir, mts, cap, fotos: { antes:[], durante:[], despues:[] } });
+        save(); closeModal('mod-obra'); renderObras();
+    }
+
+    function renderObras() {
+        const cont = document.getElementById('lista-obras');
+        cont.innerHTML = db.obras.map(o => `
+            <button class="obra-btn" onclick="verDetalle(${o.id})">
+                <strong>${o.dir}</strong><br>
+                <small>${o.mts}m² • Capataz: ${o.cap}</small>
+            </button>
+        `).join('');
+    }
+
+    function renderObrasCap() {
+        const cont = document.getElementById('lista-obras-cap');
+        const misObras = db.obras.filter(o => o.cap === currentUser.nom);
+        cont.innerHTML = misObras.map(o => `
+            <button class="obra-btn" onclick="verDetalle(${o.id})">
+                <strong>${o.dir}</strong><br>
+                <small>${o.mts}m² • Ver y subir fotos</small>
+            </button>
+        `).join('') || '<p>No tienes obras asignadas.</p>';
+    }
+
+    function verDetalle(id) {
+        const o = db.obras.find(x => x.id === id);
+        const mts = parseFloat(o.mts);
+        const mat = { baldosas: Math.ceil(mts/0.16), cemento: Math.ceil(mts*0.3), arena: (mts*0.04).toFixed(2) };
+        const mapUrl = `http://googleusercontent.com/maps.google.com/3{encodeURIComponent(o.dir)}&output=embed`;
+
+        document.getElementById('detalle-content').innerHTML = `
+            <h3 style="margin-bottom:5px">${o.dir}</h3>
+            <p style="font-size:12px; color:gray; margin-bottom:10px">Capataz: ${o.cap}</p>
+            <div class="map-container"><iframe src="${mapUrl}"></iframe></div>
+            <div class="mat-grid">
+                <div class="mat-card"><span class="mat-val">${mat.baldosas}</span><span class="mat-label">Baldosas</span></div>
+                <div class="mat-card"><span class="mat-val">${mat.cemento}</span><span class="mat-label">Cemento (Bol)</span></div>
+                <div class="mat-card"><span class="mat-val">${mat.arena}m³</span><span class="mat-label">Arena</span></div>
+                <div class="mat-card"><span class="mat-val">${o.mts}m²</span><span class="mat-label">Superficie</span></div>
             </div>
-            <div style="font-size:12px;color:gray;margin-top:5px">${o.mts} m² • Capataz: ${o.cap || 'Sin asignar'}</div>
-        </div>
-    `).join('');
-}
-
-function renderCaps() {
-    const list = document.getElementById('cap-list');
-    list.innerHTML = state.capataces.map(c => `
-        <div style="padding:12px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-            <div><strong>${c.nombre}</strong><br><small>@${c.user}</small></div>
-            <button onclick="deleteCap('${c.user}')" style="color:red;border:none;background:none">Eliminar</button>
-        </div>
-    `).join('');
-}
-
-function openModal(id) {
-    if(id === 'modal-obra') {
-        const sel = document.getElementById('m-cap');
-        sel.innerHTML = '<option value="">Asignar capataz...</option>' + 
-            state.capataces.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+            <h4>Fotos de Obra</h4>
+            <div class="photo-tabs">
+                <div class="p-tab active" id="t-antes" onclick="switchPhotoTab(${o.id}, 'antes')">Antes</div>
+                <div class="p-tab" id="t-durante" onclick="switchPhotoTab(${o.id}, 'durante')">Durante</div>
+                <div class="p-tab" id="t-despues" onclick="switchPhotoTab(${o.id}, 'despues')">Después</div>
+            </div>
+            <div id="loader">Procesando foto...</div>
+            ${currentUser.type === 'cap' ? `
+                <input type="file" accept="image/*" id="fileInput" style="display:none" onchange="processPhoto(${o.id})">
+                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()"><i class="ti ti-camera"></i> Tomar / Subir Foto</button>
+            ` : ''}
+            <div class="photo-grid" id="photo-grid"></div>
+            ${currentUser.type === 'admin' ? `<button class="btn btn-outline" style="color:red; margin-top:20px" onclick="eliminarObra(${o.id})">Eliminar Obra</button>` : ''}
+        `;
+        showScreen('scr-detalle');
+        switchPhotoTab(o.id, 'antes');
     }
-    document.getElementById(id).classList.add('open');
-}
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function switchPhotoTab(id, fase) {
+        currentFase = fase;
+        document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('t-'+fase).classList.add('active');
+        const o = db.obras.find(x => x.id === id);
+        const grid = document.getElementById('photo-grid');
+        grid.innerHTML = o.fotos[fase].map(f => `<img src="${f}" class="photo-item">`).join('') || '<p style="grid-column:span 3; font-size:12px; color:gray; text-align:center; padding:20px">Sin fotos en esta etapa.</p>';
+    }
 
-function saveCap() {
-    const nombre = document.getElementById('c-nombre').value;
-    const user = document.getElementById('c-user').value;
-    const pass = document.getElementById('c-pass').value;
-    if(!nombre || !user || !pass) return alert("Completa todos los campos");
-    state.capataces.push({ nombre, user, pass });
-    persist();
-    renderCaps();
-    closeModal('modal-cap');
-    showToast("Capataz guardado");
-}
+    // --- MEJORA: COMPRESIÓN DE FOTOS ---
+    function processPhoto(id) {
+        const file = document.getElementById('fileInput').files;
+        if(!file) return;
+        
+        document.getElementById('loader').style.display = 'block';
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                // Achicamos la foto para que no pese tanto
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800;
+                let width = img.width;
+                let height = img.height;
 
-function saveObra() {
-    const dir = document.getElementById('m-dir').value;
-    const mts = document.getElementById('m-mts').value;
-    const cap = document.getElementById('m-cap').value;
-    if(!dir || !mts) return alert("Completa los datos");
-    state.obras.push({ dir, mts, cap });
-    persist();
-    renderObras();
-    closeModal('modal-obra');
-    showToast("Obra creada");
-}
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_WIDTH) { width *= MAX_WIDTH / height; height = MAX_WIDTH; }
+                }
 
-function deleteCap(user) {
-    state.capataces = state.capataces.filter(c => c.user !== user);
-    persist();
-    renderCaps();
-}
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
 
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
-}
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.7); // Calidad al 70%
+                const o = db.obras.find(x => x.id === id);
+                o.fotos[currentFase].push(dataUrl);
+                
+                save();
+                document.getElementById('loader').style.display = 'none';
+                switchPhotoTab(id, currentFase);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function eliminarObra(id) {
+        if(confirm("¿Seguro quieres borrar esta obra y sus fotos?")) {
+            db.obras = db.obras.filter(o => o.id !== id);
+            save(); back(); renderObras();
+        }
+    }
+
+    function back() { showScreen(currentUser.type === 'admin' ? 'scr-admin' : 'scr-cap'); }
+    function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    function openModal(id) { 
+        if(id === 'mod-obra') document.getElementById('o-cap-sel').innerHTML = db.caps.map(c => `<option value="${c.nom}">${c.nom}</option>`).join('') || '<option>Crea un capataz primero</option>';
+        document.getElementById(id).classList.add('active'); 
+    }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 </script>
 
 </body>
