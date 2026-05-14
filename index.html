@@ -10,20 +10,19 @@
 
     <style>
         :root {
-            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-sans: 'Inter', sans-serif;
             --color-background-primary: #ffffff;
             --color-background-secondary: #f9fafb;
             --color-text-primary: #111827;
             --color-text-secondary: #4b5563;
-            --color-text-tertiary: #9ca3af;
             --color-border-tertiary: #e5e7eb;
             --border-radius-md: 8px;
             --border-radius-lg: 12px;
         }
 
         *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:var(--font-sans);background:#f3f4f6; color: var(--color-text-primary)}
-        .app{max-width: 500px; margin: 0 auto; min-height:100vh; background: var(--color-background-primary); display:flex; flex-direction:column; box-shadow: 0 0 20px rgba(0,0,0,0.05)}
+        body{font-family:var(--font-sans);background:#f3f4f6;color:var(--color-text-primary)}
+        .app{max-width:500px;margin:0 auto;min-height:100vh;background:var(--color-background-primary);display:flex;flex-direction:column;box-shadow:0 0 20px rgba(0,0,0,0.05)}
         .screen{display:none;flex-direction:column;flex:1}
         .screen.active{display:flex}
 
@@ -31,53 +30,40 @@
         .login-wrap{display:flex;align-items:center;justify-content:center;flex:1;background:var(--color-background-secondary)}
         .login-box{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:2rem;width:90%}
         .login-logo{text-align:center;margin-bottom:1.5rem}
-        .login-logo .logo-icon{width:52px;height:52px;background:#1D9E75;border-radius:var(--border-radius-md);display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem}
-        .login-logo i{font-size:26px;color:#fff}
-        .login-title{font-size:18px;font-weight:500;margin-bottom:4px}
-        .login-sub{font-size:13px;color:var(--color-text-secondary)}
+        .logo-icon{width:52px;height:52px;background:#1D9E75;border-radius:var(--border-radius-md);display:inline-flex;align-items:center;justify-content:center;margin-bottom:0.75rem;color:#fff;font-size:26px}
+        .login-title{font-size:18px;font-weight:600;margin-bottom:4px}
         .login-field{margin-bottom:1rem}
         .login-field label{display:block;font-size:13px;color:var(--color-text-secondary);margin-bottom:6px}
-        .login-field input{width:100%;padding:10px;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);font-size:14px}
-        .login-btn{width:100%;padding:12px;background:#1D9E75;color:#fff;border:none;border-radius:var(--border-radius-md);font-weight:500;cursor:pointer}
+        .login-field input{width:100%;padding:10px;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md)}
+        .login-btn{width:100%;padding:12px;background:#1D9E75;color:#fff;border:none;border-radius:var(--border-radius-md);font-weight:600;cursor:pointer}
         .login-err{color:#E24B4A;font-size:12px;margin-top:8px;text-align:center;min-height:18px}
 
         /* Topbar */
-        .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--color-background-primary);border-bottom:1px solid var(--color-border-tertiary)}
+        .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid var(--color-border-tertiary)}
         .topbar-logo{width:32px;height:32px;background:#1D9E75;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff}
-        .topbar-title{font-size:15px;font-weight:600}
-        .topbar-role{font-size:11px;color:#1D9E75;background:#E1F5EE;padding:2px 8px;border-radius:20px}
-        .btn-logout{font-size:12px; color:var(--color-text-secondary); background:none; border:1px solid var(--color-border-tertiary); padding:4px 8px; border-radius:6px; cursor:pointer}
+        .btn-logout{font-size:12px;color:var(--color-text-secondary);background:none;border:1px solid var(--color-border-tertiary);padding:5px 10px;border-radius:6px;cursor:pointer}
 
-        /* Layout & Cards */
+        /* Main Content */
         .main{flex:1;overflow-y:auto;padding:16px}
-        .obras-grid{display:grid;gap:12px}
-        .obra-card{background:#fff;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;cursor:pointer}
-        .obra-status{font-size:11px;padding:2px 8px;border-radius:20px; text-transform: capitalize}
-        .st-activa{background:#E1F5EE;color:#0F6E56}
-        .st-pendiente{background:#FAEEDA;color:#854F0B}
-        .st-terminada{background:#F3F4F6;color:#374151}
-
-        /* Detalle & Materiales */
-        .detalle-card{background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:12px; margin-bottom:12px}
-        .mat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        .mat-item{background:#fff; padding:10px; border-radius:8px; border:1px solid var(--color-border-tertiary)}
-        .mat-val{font-size:16px; font-weight:600; color:#1D9E75}
-
-        /* Tabs */
         .tabs{display:flex;gap:10px;margin-bottom:16px;border-bottom:1px solid var(--color-border-tertiary)}
-        .tab-btn{padding:8px 12px; background:none; border:none; cursor:pointer; color:var(--color-text-secondary); border-bottom:2px solid transparent}
-        .tab-btn.active{color:#1D9E75; border-bottom-color:#1D9E75; font-weight:600}
+        .tab-btn{padding:8px 12px;background:none;border:none;cursor:pointer;color:var(--color-text-secondary);border-bottom:2px solid transparent}
+        .tab-btn.active{color:#1D9E75;border-bottom-color:#1D9E75;font-weight:600}
         .tab-panel{display:none}.tab-panel.active{display:block}
 
+        /* Obras & Cards */
+        .obra-card{background:#fff;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:10px;cursor:pointer}
+        .obra-status{font-size:11px;padding:2px 8px;border-radius:20px;text-transform:capitalize}
+        .st-activa{background:#E1F5EE;color:#0F6E56}
+        .st-pendiente{background:#FAEEDA;color:#854F0B}
+        
         /* Modales */
         .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100}
         .modal-overlay.open{display:flex}
         .modal{background:#fff;padding:20px;border-radius:12px;width:90%;max-width:400px}
-
-        /* Utilidades */
-        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1D9E75;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;opacity:0;transition:0.3s;pointer-events:none;z-index:1000}
+        
+        /* Toast */
+        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1D9E75;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;opacity:0;transition:0.3s;pointer-events:none}
         .toast.show{opacity:1}
-        .btn-add{background:#1D9E75; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:13px}
     </style>
 </head>
 <body>
@@ -89,17 +75,10 @@
                 <div class="login-logo">
                     <div class="logo-icon"><i class="ti ti-road"></i></div>
                     <div class="login-title">VeredasApp</div>
-                    <div class="login-sub">Gestión de obras v1.0</div>
                 </div>
-                <div class="login-field">
-                    <label>Usuario</label>
-                    <input type="text" id="inp-user" placeholder="admin">
-                </div>
-                <div class="login-field">
-                    <label>Contraseña</label>
-                    <input type="password" id="inp-pass" placeholder="admin123">
-                </div>
-                <button class="login-btn" onclick="doLogin()">Ingresar al Panel</button>
+                <div class="login-field"><label>Usuario</label><input type="text" id="inp-user" placeholder="admin"></div>
+                <div class="login-field"><label>Contraseña</label><input type="password" id="inp-pass" placeholder="admin123"></div>
+                <button class="login-btn" onclick="doLogin()">Ingresar</button>
                 <div class="login-err" id="login-err"></div>
             </div>
         </div>
@@ -107,106 +86,85 @@
 
     <div class="screen" id="s-admin">
         <div class="topbar">
-            <div style="display:flex; align-items:center; gap:8px">
+            <div style="display:flex;align-items:center;gap:8px">
                 <div class="topbar-logo"><i class="ti ti-road"></i></div>
-                <span class="topbar-title">Panel Admin</span>
+                <span style="font-weight:600">Panel Admin</span>
             </div>
-            <button class="btn-logout" onclick="doLogout()">Salir</button>
+            <button class="btn-logout" onclick="location.reload()">Salir</button>
         </div>
         <div class="main">
             <div class="tabs">
-                <button class="tab-btn active" onclick="adminTab('obras')">Obras</button>
-                <button class="tab-btn" onclick="adminTab('capataces')">Capataces</button>
+                <button class="tab-btn active" onclick="switchTab('obras')">Obras</button>
+                <button class="tab-btn" onclick="switchTab('capataces')">Capataces</button>
             </div>
             <div id="tab-obras" class="tab-panel active">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-                    <h3>Lista de Obras</h3>
-                    <button class="btn-add" onclick="openModalObra()">+ Nueva</button>
-                </div>
-                <div class="obras-grid" id="obras-grid"></div>
+                <button onclick="openModal('modal-obra')" style="width:100%;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px;margin-bottom:15px">+ Nueva Obra</button>
+                <div id="obras-grid"></div>
             </div>
             <div id="tab-capataces" class="tab-panel">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-                    <h3>Capataces</h3>
-                    <button class="btn-add" onclick="openModalCap()">+ Nuevo</button>
-                </div>
+                <button onclick="openModal('modal-cap')" style="width:100%;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px;margin-bottom:15px">+ Nuevo Capataz</button>
                 <div id="cap-list"></div>
             </div>
         </div>
-    </div>
-
-    <div class="screen" id="s-detalle">
-        <div class="topbar">
-            <button class="btn-logout" onclick="showScreen('s-admin')">← Volver</button>
-            <span class="topbar-title">Detalle de Obra</span>
-            <div></div>
-        </div>
-        <div class="main" id="detalle-content"></div>
     </div>
 </div>
 
 <div class="modal-overlay" id="modal-obra">
     <div class="modal">
         <h3>Nueva Obra</h3><br>
-        <input type="text" id="m-dir" placeholder="Dirección" style="width:100%; padding:10px; margin-bottom:10px"><br>
-        <input type="number" id="m-mts" placeholder="Metros m²" style="width:100%; padding:10px; margin-bottom:10px">
-        <div style="display:flex; gap:10px; margin-top:10px">
-            <button onclick="closeModal('modal-obra')" style="flex:1; padding:10px">Cancelar</button>
-            <button onclick="saveObra()" style="flex:1; padding:10px; background:#1D9E75; color:#fff; border:none; border-radius:8px">Guardar</button>
+        <input type="text" id="m-dir" placeholder="Dirección" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
+        <input type="number" id="m-mts" placeholder="Metros m²" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
+        <select id="m-cap" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px"></select>
+        <div style="display:flex;gap:10px">
+            <button onclick="closeModal('modal-obra')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">Cancelar</button>
+            <button onclick="saveObra()" style="flex:1;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px">Guardar</button>
         </div>
     </div>
 </div>
 
-<div class="toast" id="toast">Acción realizada con éxito</div>
+<div class="modal-overlay" id="modal-cap">
+    <div class="modal">
+        <h3>Nuevo Capataz</h3><br>
+        <input type="text" id="c-nombre" placeholder="Nombre Completo" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
+        <input type="text" id="c-user" placeholder="Usuario" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
+        <input type="password" id="c-pass" placeholder="Contraseña" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:6px">
+        <div style="display:flex;gap:10px">
+            <button onclick="closeModal('modal-cap')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">Cancelar</button>
+            <button onclick="saveCap()" style="flex:1;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Acción realizada</div>
 
 <script>
-// --- LÓGICA DE DATOS (CORREGIDA PARA LOCALSTORAGE) ---
-const KEY_OBRAS = 'veredas-obras';
-const KEY_CAPS = 'veredas-capataces';
+const KEY_OBRAS = 'v-obras';
+const KEY_CAPS = 'v-caps';
 
 let state = {
-    obras: [],
-    capataces: [],
-    currentUser: null
+    obras: JSON.parse(localStorage.getItem(KEY_OBRAS)) || [],
+    capataces: JSON.parse(localStorage.getItem(KEY_CAPS)) || []
 };
 
-function loadData() {
-    const ro = localStorage.getItem(KEY_OBRAS);
-    state.obras = ro ? JSON.parse(ro) : [
-        { id: 'o1', dir: 'Av. Rivadavia 3456', mts: 85, estado: 'activa', capId: null },
-        { id: 'o2', dir: 'Calle Florida 123', mts: 120, estado: 'pendiente', capId: null }
-    ];
-    const rc = localStorage.getItem(KEY_CAPS);
-    state.capataces = rc ? JSON.parse(rc) : [];
-}
-
+// --- PERSISTENCIA CORREGIDA ---
 function persist() {
     localStorage.setItem(KEY_OBRAS, JSON.stringify(state.obras));
     localStorage.setItem(KEY_CAPS, JSON.stringify(state.capataces));
-}
-
-// --- NAVEGACIÓN ---
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
 }
 
 function doLogin() {
     const u = document.getElementById('inp-user').value;
     const p = document.getElementById('inp-pass').value;
     if(u === 'admin' && p === 'admin123') {
-        showScreen('s-admin');
+        document.getElementById('s-login').classList.remove('active');
+        document.getElementById('s-admin').classList.add('active');
         renderObras();
     } else {
         document.getElementById('login-err').textContent = "Credenciales incorrectas";
     }
 }
 
-function doLogout() {
-    location.reload();
-}
-
-function adminTab(tab) {
+function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     event.currentTarget.classList.add('active');
@@ -215,82 +173,76 @@ function adminTab(tab) {
     if(tab === 'capataces') renderCaps();
 }
 
-// --- RENDERIZADO ---
 function renderObras() {
     const grid = document.getElementById('obras-grid');
     grid.innerHTML = state.obras.map(o => `
-        <div class="obra-card" onclick="verDetalle('${o.id}')">
-            <div style="display:flex; justify-content:space-between">
+        <div class="obra-card">
+            <div style="display:flex;justify-content:space-between">
                 <strong>${o.dir}</strong>
-                <span class="obra-status st-${o.estado}">${o.estado}</span>
+                <span class="obra-status st-activa">Activa</span>
             </div>
-            <div style="font-size:13px; color:gray; margin-top:5px">${o.mts} m² • Materiales calculados</div>
+            <div style="font-size:12px;color:gray;margin-top:5px">${o.mts} m² • Capataz: ${o.cap || 'Sin asignar'}</div>
         </div>
     `).join('');
 }
 
-function verDetalle(id) {
-    const o = state.obras.find(x => x.id === id);
-    const m = calcMateriales(o.mts);
-    const content = document.getElementById('detalle-content');
-    content.innerHTML = `
-        <h2>${o.dir}</h2>
-        <p style="margin-bottom:15px">Estado: <span class="obra-status st-${o.estado}">${o.estado}</span></p>
-        
-        <div class="detalle-card">
-            <h4>Cálculo de Materiales</h4><br>
-            <div class="mat-grid">
-                <div class="mat-item"><span>Baldosas</span><br><span class="mat-val">${m.baldosas}</span> u.</div>
-                <div class="mat-item"><span>Cemento</span><br><span class="mat-val">${m.cemento}</span> bol.</div>
-                <div class="mat-item"><span>Arena</span><br><span class="mat-val">${m.arena}</span> m³</div>
-                <div class="mat-item"><span>Cascote</span><br><span class="mat-val">${m.cascote}</span> m³</div>
-            </div>
+function renderCaps() {
+    const list = document.getElementById('cap-list');
+    list.innerHTML = state.capataces.map(c => `
+        <div style="padding:12px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+            <div><strong>${c.nombre}</strong><br><small>@${c.user}</small></div>
+            <button onclick="deleteCap('${c.user}')" style="color:red;border:none;background:none">Eliminar</button>
         </div>
-        <button onclick="borrarObra('${o.id}')" style="color:red; border:none; background:none; cursor:pointer">Eliminar Obra</button>
-    `;
-    showScreen('s-detalle');
+    `).join('');
 }
 
-function calcMateriales(mts) {
-    return {
-        baldosas: Math.ceil(mts / 0.16),
-        cemento: Math.ceil(mts * 0.25),
-        arena: (mts * 0.035).toFixed(2),
-        cascote: (mts * 0.04).toFixed(2)
-    };
+function openModal(id) {
+    if(id === 'modal-obra') {
+        const sel = document.getElementById('m-cap');
+        sel.innerHTML = '<option value="">Asignar capataz...</option>' + 
+            state.capataces.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+    }
+    document.getElementById(id).classList.add('open');
 }
 
-// --- ACCIONES ---
-function openModalObra() { document.getElementById('modal-obra').classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function saveCap() {
+    const nombre = document.getElementById('c-nombre').value;
+    const user = document.getElementById('c-user').value;
+    const pass = document.getElementById('c-pass').value;
+    if(!nombre || !user || !pass) return alert("Completa todos los campos");
+    state.capataces.push({ nombre, user, pass });
+    persist();
+    renderCaps();
+    closeModal('modal-cap');
+    showToast("Capataz guardado");
+}
 
 function saveObra() {
     const dir = document.getElementById('m-dir').value;
     const mts = document.getElementById('m-mts').value;
+    const cap = document.getElementById('m-cap').value;
     if(!dir || !mts) return alert("Completa los datos");
-    state.obras.push({ id: 'o'+Date.now(), dir, mts, estado: 'pendiente', capId: null });
+    state.obras.push({ dir, mts, cap });
     persist();
     renderObras();
     closeModal('modal-obra');
-    showToast();
+    showToast("Obra creada");
 }
 
-function borrarObra(id) {
-    if(!confirm("¿Eliminar?")) return;
-    state.obras = state.obras.filter(o => o.id !== id);
+function deleteCap(user) {
+    state.capataces = state.capataces.filter(c => c.user !== user);
     persist();
-    showScreen('s-admin');
-    renderObras();
+    renderCaps();
 }
 
-function showToast() {
+function showToast(msg) {
     const t = document.getElementById('toast');
+    t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
 }
-
-// Inicializar
-loadData();
 </script>
 
 </body>
