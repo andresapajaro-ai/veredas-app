@@ -10,6 +10,7 @@
     <link rel="apple-touch-icon" href="vpv%20logo.jpeg">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -114,65 +115,75 @@
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('vapp_db_v3')) || { obras: [], caps: [] };
+    // CONFIGURACIÓN SUPABASE (Reemplaza con tus credenciales)
+    const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
+    const SUPABASE_KEY = 'tu-anon-key';
+    const supabase = exports.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let db = { obras: [], caps: [] };
     let currentUser = null;
     let currentFase = 'antes';
 
-    function save() { 
-        try {
-            localStorage.setItem('vapp_db_v3', JSON.stringify(db)); 
-        } catch(e) {
-            alert("Memoria llena. Intenta borrar algunas obras antiguas.");
-        }
-    }
-
-    function login() {
+    async function login() {
         const u = document.getElementById('log-user').value;
         const p = document.getElementById('log-pass').value;
+
         if(u === 'admin' && p === 'admin123') {
             currentUser = { type: 'admin' };
-            showScreen('scr-admin'); renderObras();
+            await refreshData();
+            showScreen('scr-admin');
         } else {
-            const cap = db.caps.find(c => c.usr === u && c.pwd === p);
-            if(cap) {
-                currentUser = { type: 'cap', ...cap };
-                document.getElementById('cap-name-header').innerText = cap.nom;
-                showScreen('scr-cap'); renderObrasCap();
+            const { data: caps, error } = await supabase.from('caps').select('*').eq('usr', u).eq('pwd', p).single();
+            if(caps) {
+                currentUser = { type: 'cap', ...caps };
+                document.getElementById('cap-name-header').innerText = caps.nom;
+                await refreshData();
+                showScreen('scr-cap');
             } else { alert("Acceso denegado"); }
         }
     }
 
-    function crearCap() {
+    async function crearCap() {
         const nomEl = document.getElementById('c-nom');
         const usrEl = document.getElementById('c-usr');
         const pwdEl = document.getElementById('c-pwd');
         if(!nomEl.value || !usrEl.value || !pwdEl.value) return;
-        db.caps.push({ nom: nomEl.value, usr: usrEl.value, pwd: pwdEl.value }); 
-        save(); 
+
+        await supabase.from('caps').insert([{ nom: nomEl.value, usr: usrEl.value, pwd: pwdEl.value }]);
+        await refreshData();
         closeModal('mod-cap');
         nomEl.value = ''; usrEl.value = ''; pwdEl.value = '';
     }
 
-    function crearObra() {
+    async function crearObra() {
         const dirEl = document.getElementById('o-dir');
         const mtsEl = document.getElementById('o-mts');
         const capEl = document.getElementById('o-cap-sel');
         const finiEl = document.getElementById('o-f-ini');
         if(!dirEl.value || !mtsEl.value) return;
-        db.obras.push({ 
+
+        const nuevaObra = { 
             id: Date.now(), 
             dir: dirEl.value, 
-            mts: mtsEl.value, 
+            mts: parseFloat(mtsEl.value), 
             cap: capEl.value, 
             fotos: { antes:[], durante:[], despues:[] },
             estado: 'Empezada',
-            fInicio: finiEl.value || new Date().toISOString().split('T')[0],
-            fFin: ''
-        });
-        save(); 
+            f_inicio: finiEl.value || new Date().toISOString().split('T')[0]
+        };
+
+        await supabase.from('obras').insert([nuevaObra]);
+        await refreshData();
         closeModal('mod-obra'); 
-        renderObras();
         dirEl.value = ''; mtsEl.value = '';
+    }
+
+    async function refreshData() {
+        const { data: obras } = await supabase.from('obras').select('*');
+        const { data: caps } = await supabase.from('caps').select('*');
+        db.obras = obras || [];
+        db.caps = caps || [];
+        if(currentUser?.type === 'admin') renderObras(); else renderObrasCap();
     }
 
     function renderObras() {
@@ -184,7 +195,7 @@
                     <span style="font-size:10px; padding:2px 6px; border-radius:5px; background:${o.estado === 'Terminada' ? '#dcfce7' : '#fef9c3'}; color:${o.estado === 'Terminada' ? '#166534' : '#854d0e'}; font-weight:bold;">${o.estado}</span>
                 </div>
                 <small>${o.mts}m² • Capataz: ${o.cap}</small><br>
-                <small style="color:gray;">📅 ${o.fInicio} ${o.fFin ? ' a ' + o.fFin : '(En curso)'}</small>
+                <small style="color:gray;">📅 ${o.f_inicio} ${o.f_fin ? ' a ' + o.f_fin : '(En curso)'}</small>
             </button>
         `).join('');
     }
@@ -199,7 +210,7 @@
                     <span style="font-size:10px; padding:2px 6px; border-radius:5px; background:${o.estado === 'Terminada' ? '#dcfce7' : '#fef9c3'}; color:${o.estado === 'Terminada' ? '#166534' : '#854d0e'}; font-weight:bold;">${o.estado}</span>
                 </div>
                 <small>${o.mts}m² • Ver y subir fotos</small><br>
-                <small style="color:gray;">📅 ${o.fInicio} ${o.fFin ? ' a ' + o.fFin : '(En curso)'}</small>
+                <small style="color:gray;">📅 ${o.f_inicio} ${o.f_fin ? ' a ' + o.f_fin : '(En curso)'}</small>
             </button>
         `).join('') || '<p>No tienes obras asignadas.</p>';
     }
@@ -220,7 +231,7 @@
             </div>
             <p style="font-size:12px; color:gray; margin-bottom:5px">Capataz: ${o.cap}</p>
             <p style="font-size:12px; color:gray; margin-bottom:10px">
-                Inicio: ${o.fInicio} ${o.estado === 'Terminada' ? ` | Fin: <input type="date" value="${o.fFin || new Date().toISOString().split('T')[0]}" onchange="cambiarFechaFin(${o.id}, this.value)" style="display:inline; width:auto; padding:2px; font-size:11px; margin-bottom:0; border:none; background:transparent;">` : ''}
+                Inicio: ${o.f_inicio} ${o.estado === 'Terminada' ? ` | Fin: <input type="date" value="${o.f_fin || new Date().toISOString().split('T')[0]}" onchange="cambiarFechaFin(${o.id}, this.value)" style="display:inline; width:auto; padding:2px; font-size:11px; margin-bottom:0; border:none; background:transparent;">` : ''}
             </p>
             <div class="map-container"><iframe src="${mapUrl}"></iframe></div>
             <div class="mat-grid">
@@ -341,9 +352,10 @@
                     const o = db.obras.find(x => x.id === id);
                     o.fotos[currentFase].push(dataUrl);
                     
-                    save();
-                    document.getElementById('loader').style.display = 'none';
-                    switchPhotoTab(id, currentFase);
+                    supabase.from('obras').update({ fotos: o.fotos }).eq('id', id).then(() => {
+                        document.getElementById('loader').style.display = 'none';
+                        switchPhotoTab(id, currentFase);
+                    });
                 };
                 img.onerror = function() {
                     alert("Error al procesar la imagen. Intenta tomar la foto directamente.");
@@ -355,24 +367,26 @@
         });
     }
 
-    function cambiarEstado(id, nuevoEstado) {
+    async function cambiarEstado(id, nuevoEstado) {
         const o = db.obras.find(x => x.id === id);
-        o.estado = nuevoEstado;
-        if (nuevoEstado === 'Terminada' && !o.fFin) o.fFin = new Date().toISOString().split('T')[0];
-        save();
+        let f_fin = o.f_fin;
+        if (nuevoEstado === 'Terminada' && !f_fin) f_fin = new Date().toISOString().split('T')[0];
+        
+        await supabase.from('obras').update({ estado: nuevoEstado, f_fin }).eq('id', id);
+        await refreshData();
         verDetalle(id); // Refrescar para mostrar/ocultar fecha fin
     }
 
-    function cambiarFechaFin(id, nuevaFecha) {
-        const o = db.obras.find(x => x.id === id);
-        o.fFin = nuevaFecha;
-        save();
+    async function cambiarFechaFin(id, nuevaFecha) {
+        await supabase.from('obras').update({ f_fin: nuevaFecha }).eq('id', id);
+        await refreshData();
     }
 
-    function eliminarObra(id) {
+    async function eliminarObra(id) {
         if(confirm("¿Seguro quieres borrar esta obra y sus fotos?")) {
-            db.obras = db.obras.filter(o => o.id !== id);
-            save(); back(); renderObras();
+            await supabase.from('obras').delete().eq('id', id);
+            await refreshData();
+            back();
         }
     }
 
