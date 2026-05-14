@@ -7,7 +7,7 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2311/2311417.png">
+    <link rel="apple-touch-icon" href="vpv%20logo.jpeg">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -58,7 +58,7 @@
 <div class="app-shell">
     <div class="screen active" id="scr-login">
         <div class="container" style="text-align:center; padding-top:80px;">
-            <div style="width:70px; height:70px; background:var(--primary); border-radius:20px; display:inline-flex; align-items:center; justify-content:center; color:white; font-size:35px; margin-bottom:15px;"><i class="ti ti-road"></i></div>
+            <img src="vpv%20logo.jpeg" alt="Logo de la empresa" style="width:70px; height:70px; border-radius:20px; margin-bottom:15px; object-fit: contain; background: var(--primary); padding: 5px;">
             <h1 style="margin-bottom:30px;">VeredasApp</h1>
             <input type="text" id="log-user" placeholder="Usuario">
             <input type="password" id="log-pass" placeholder="Contraseña">
@@ -94,6 +94,8 @@
         <h3>Cargar Nueva Obra</h3><br>
         <input type="text" id="o-dir" placeholder="Dirección exacta">
         <input type="number" id="o-mts" placeholder="Metros cuadrados (m²)">
+        <label style="font-size: 12px; color: gray; display: block; margin-bottom: 5px;">Fecha de Inicio:</label>
+        <input type="date" id="o-f-ini">
         <select id="o-cap-sel"></select>
         <button class="btn btn-primary" onclick="crearObra()">Guardar Obra</button>
         <button class="btn btn-outline" onclick="closeModal('mod-obra')">Cancelar</button>
@@ -155,8 +157,18 @@
         const dirEl = document.getElementById('o-dir');
         const mtsEl = document.getElementById('o-mts');
         const capEl = document.getElementById('o-cap-sel');
+        const finiEl = document.getElementById('o-f-ini');
         if(!dirEl.value || !mtsEl.value) return;
-        db.obras.push({ id: Date.now(), dir: dirEl.value, mts: mtsEl.value, cap: capEl.value, fotos: { antes:[], durante:[], despues:[] } });
+        db.obras.push({ 
+            id: Date.now(), 
+            dir: dirEl.value, 
+            mts: mtsEl.value, 
+            cap: capEl.value, 
+            fotos: { antes:[], durante:[], despues:[] },
+            estado: 'Empezada',
+            fInicio: finiEl.value || new Date().toISOString().split('T')[0],
+            fFin: ''
+        });
         save(); 
         closeModal('mod-obra'); 
         renderObras();
@@ -167,8 +179,12 @@
         const cont = document.getElementById('lista-obras');
         cont.innerHTML = db.obras.map(o => `
             <button class="obra-btn" onclick="verDetalle(${o.id})">
-                <strong>${o.dir}</strong><br>
-                <small>${o.mts}m² • Capataz: ${o.cap}</small>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <strong>${o.dir}</strong>
+                    <span style="font-size:10px; padding:2px 6px; border-radius:5px; background:${o.estado === 'Terminada' ? '#dcfce7' : '#fef9c3'}; color:${o.estado === 'Terminada' ? '#166534' : '#854d0e'}; font-weight:bold;">${o.estado}</span>
+                </div>
+                <small>${o.mts}m² • Capataz: ${o.cap}</small><br>
+                <small style="color:gray;">📅 ${o.fInicio} ${o.fFin ? ' a ' + o.fFin : '(En curso)'}</small>
             </button>
         `).join('');
     }
@@ -178,8 +194,12 @@
         const misObras = db.obras.filter(o => o.cap === currentUser.nom);
         cont.innerHTML = misObras.map(o => `
             <button class="obra-btn" onclick="verDetalle(${o.id})">
-                <strong>${o.dir}</strong><br>
-                <small>${o.mts}m² • Ver y subir fotos</small>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <strong>${o.dir}</strong>
+                    <span style="font-size:10px; padding:2px 6px; border-radius:5px; background:${o.estado === 'Terminada' ? '#dcfce7' : '#fef9c3'}; color:${o.estado === 'Terminada' ? '#166534' : '#854d0e'}; font-weight:bold;">${o.estado}</span>
+                </div>
+                <small>${o.mts}m² • Ver y subir fotos</small><br>
+                <small style="color:gray;">📅 ${o.fInicio} ${o.fFin ? ' a ' + o.fFin : '(En curso)'}</small>
             </button>
         `).join('') || '<p>No tienes obras asignadas.</p>';
     }
@@ -191,8 +211,17 @@
         const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(o.dir)}&output=embed`;
 
         document.getElementById('detalle-content').innerHTML = `
-            <h3 style="margin-bottom:5px">${o.dir}</h3>
-            <p style="font-size:12px; color:gray; margin-bottom:10px">Capataz: ${o.cap}</p>
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+                <h3 style="margin-bottom:5px">${o.dir}</h3>
+                <select onchange="cambiarEstado(${o.id}, this.value)" style="width:auto; padding:5px; font-size:12px; margin-bottom:0;">
+                    <option value="Empezada" ${o.estado === 'Empezada' ? 'selected' : ''}>Empezada</option>
+                    <option value="Terminada" ${o.estado === 'Terminada' ? 'selected' : ''}>Terminada</option>
+                </select>
+            </div>
+            <p style="font-size:12px; color:gray; margin-bottom:5px">Capataz: ${o.cap}</p>
+            <p style="font-size:12px; color:gray; margin-bottom:10px">
+                Inicio: ${o.fInicio} ${o.estado === 'Terminada' ? ` | Fin: <input type="date" value="${o.fFin || new Date().toISOString().split('T')[0]}" onchange="cambiarFechaFin(${o.id}, this.value)" style="display:inline; width:auto; padding:2px; font-size:11px; margin-bottom:0; border:none; background:transparent;">` : ''}
+            </p>
             <div class="map-container"><iframe src="${mapUrl}"></iframe></div>
             <div class="mat-grid">
                 <div class="mat-card"><span class="mat-val">${mat.baldosas}</span><span class="mat-label">Baldosas</span></div>
@@ -326,6 +355,20 @@
         });
     }
 
+    function cambiarEstado(id, nuevoEstado) {
+        const o = db.obras.find(x => x.id === id);
+        o.estado = nuevoEstado;
+        if (nuevoEstado === 'Terminada' && !o.fFin) o.fFin = new Date().toISOString().split('T')[0];
+        save();
+        verDetalle(id); // Refrescar para mostrar/ocultar fecha fin
+    }
+
+    function cambiarFechaFin(id, nuevaFecha) {
+        const o = db.obras.find(x => x.id === id);
+        o.fFin = nuevaFecha;
+        save();
+    }
+
     function eliminarObra(id) {
         if(confirm("¿Seguro quieres borrar esta obra y sus fotos?")) {
             db.obras = db.obras.filter(o => o.id !== id);
@@ -333,7 +376,10 @@
         }
     }
 
-    function back() { showScreen(currentUser.type === 'admin' ? 'scr-admin' : 'scr-cap'); }
+    function back() { 
+        if(currentUser.type === 'admin') renderObras(); else renderObrasCap();
+        showScreen(currentUser.type === 'admin' ? 'scr-admin' : 'scr-cap'); 
+    }
     function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     function openModal(id) { 
         if(id === 'mod-obra') document.getElementById('o-cap-sel').innerHTML = db.caps.map(c => `<option value="${c.nom}">${c.nom}</option>`).join('') || '<option>Crea un capataz primero</option>';
