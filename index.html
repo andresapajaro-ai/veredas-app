@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -134,7 +135,15 @@
                 await refreshData();
                 showScreen('scr-admin');
             } else {
-                const { data: cap, error } = await client.from('caps').select('*').eq('usr', u).eq('pwd', p).single();
+                const { data: cap, error } = await client.from('caps')
+                    .select('*')
+                    .eq('usr', u)
+                    .eq('pwd', p)
+                    .single();
+                
+                // PGRST116 significa que no se encontró ningún resultado (credenciales erróneas)
+                if (error && error.code !== 'PGRST116') throw error;
+
                 if(cap) {
                     currentUser = { type: 'cap', ...cap };
                     document.getElementById('cap-name-header').innerText = cap.nom;
@@ -146,7 +155,7 @@
             }
         } catch (err) {
             console.error(err);
-            alert("Error de conexión. Verifica que SUPABASE_URL y SUPABASE_KEY sean correctos.");
+            alert("Error de Supabase: " + (err.message || "Error desconocido"));
         }
     }
 
@@ -154,12 +163,20 @@
         const nomEl = document.getElementById('c-nom');
         const usrEl = document.getElementById('c-usr');
         const pwdEl = document.getElementById('c-pwd');
-        if(!nomEl.value || !usrEl.value || !pwdEl.value) return;
+        if(!nomEl.value || !usrEl.value || !pwdEl.value) {
+            alert("Por favor, completa todos los campos del capataz.");
+            return;
+        }
 
-        await client.from('caps').insert([{ nom: nomEl.value, usr: usrEl.value, pwd: pwdEl.value }]);
-        await refreshData();
-        closeModal('mod-cap');
-        nomEl.value = ''; usrEl.value = ''; pwdEl.value = '';
+        try {
+            const { error } = await client.from('caps').insert([{ nom: nomEl.value, usr: usrEl.value, pwd: pwdEl.value }]);
+            if (error) throw error;
+            await refreshData();
+            closeModal('mod-cap');
+            nomEl.value = ''; usrEl.value = ''; pwdEl.value = '';
+        } catch (err) {
+            alert("Error al guardar capataz: " + err.message);
+        }
     }
 
     async function crearObra() {
@@ -167,30 +184,52 @@
         const mtsEl = document.getElementById('o-mts');
         const capEl = document.getElementById('o-cap-sel');
         const finiEl = document.getElementById('o-f-ini');
-        if(!dirEl.value || !mtsEl.value) return;
+        
+        const mts = parseFloat(mtsEl.value);
+        if(!dirEl.value || isNaN(mts)) {
+            alert("Ingresa una dirección y un número válido para los metros cuadrados.");
+            return;
+        }
+
+        if (db.caps.length === 0) {
+            alert("Debes registrar al menos un capataz antes de crear una obra.");
+            return;
+        }
 
         const nuevaObra = { 
             id: Date.now(), 
-            dir: dirEl.value, 
-            mts: parseFloat(mtsEl.value), 
+            dir: dirEl.value,
+            mts: mts,
             cap: capEl.value, 
             fotos: { antes:[], durante:[], despues:[] },
             estado: 'Empezada',
             f_inicio: finiEl.value || new Date().toISOString().split('T')[0]
         };
 
-        await client.from('obras').insert([nuevaObra]);
-        await refreshData();
-        closeModal('mod-obra'); 
-        dirEl.value = ''; mtsEl.value = '';
+        try {
+            const { error } = await client.from('obras').insert([nuevaObra]);
+            if (error) throw error;
+            await refreshData();
+            closeModal('mod-obra'); 
+            dirEl.value = ''; mtsEl.value = '';
+        } catch (err) {
+            alert("Error al guardar obra: " + err.message);
+        }
     }
 
     async function refreshData() {
-        const { data: obras } = await client.from('obras').select('*');
-        const { data: caps } = await client.from('caps').select('*');
-        db.obras = obras || [];
-        db.caps = caps || [];
-        if(currentUser?.type === 'admin') renderObras(); else renderObrasCap();
+        try {
+            const { data: obras, error: errObras } = await client.from('obras').select('*');
+            if (errObras) throw errObras;
+            const { data: caps, error: errCaps } = await client.from('caps').select('*');
+            if (errCaps) throw errCaps;
+            
+            db.obras = obras || [];
+            db.caps = caps || [];
+            if(currentUser?.type === 'admin') renderObras(); else renderObrasCap();
+        } catch (err) {
+            alert("Error al cargar datos de Supabase: " + err.message);
+        }
     }
 
     function renderObras() {
@@ -259,7 +298,10 @@
                 <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()"><i class="ti ti-camera"></i> Tomar / Subir Foto</button>
             ` : ''}
             <div class="photo-grid" id="photo-grid"></div>
-            ${currentUser.type === 'admin' ? `<button class="btn btn-outline" style="color:red; margin-top:20px" onclick="eliminarObra(${o.id})">Eliminar Obra</button>` : ''}
+            ${currentUser.type === 'admin' ? `
+                <button class="btn btn-outline" style="margin-top:20px" onclick="generarPDF(${o.id})"><i class="ti ti-file-text"></i> Descargar Reporte PDF</button>
+                <button class="btn btn-outline" style="color:red; margin-top:10px" onclick="eliminarObra(${o.id})">Eliminar Obra</button>
+            ` : ''}
         `;
         showScreen('scr-detalle');
         switchPhotoTab(o.id, 'antes');
@@ -372,6 +414,57 @@
             };
             reader.readAsDataURL(file);
         });
+    }
+
+    async function generarPDF(id) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const o = db.obras.find(x => x.id === id);
+        const mts = parseFloat(o.mts);
+        const mat = { baldosas: Math.ceil(mts/0.16), cemento: Math.ceil(mts*0.3), arena: (mts*0.04).toFixed(2) };
+
+        let y = 20;
+        doc.setFontSize(18);
+        doc.text("Reporte de Obra - VeredasApp", 105, y, { align: "center" });
+        y += 15;
+
+        doc.setFontSize(12);
+        doc.text(`Dirección: ${o.dir}`, 20, y); y += 7;
+        doc.text(`Capataz: ${o.cap}`, 20, y); y += 7;
+        doc.text(`Superficie: ${o.mts} m²`, 20, y); y += 7;
+        doc.text(`Estado: ${o.estado}`, 20, y); y += 7;
+        doc.text(`Fecha Inicio: ${o.f_inicio}`, 20, y); y += 7;
+        if (o.f_fin) { doc.text(`Fecha Finalización: ${o.f_fin}`, 20, y); y += 7; }
+        y += 5;
+
+        doc.setFontSize(14);
+        doc.text("Materiales Utilizados:", 20, y); y += 8;
+        doc.setFontSize(12);
+        doc.text(`• Baldosas: ${mat.baldosas} unidades`, 25, y); y += 7;
+        doc.text(`• Cemento: ${mat.cemento} bolsas`, 25, y); y += 7;
+        doc.text(`• Arena: ${mat.arena} m³`, 25, y); y += 15;
+
+        const secciones = ["antes", "durante", "despues"];
+        for (const s of secciones) {
+            if (o.fotos[s] && o.fotos[s].length > 0) {
+                if (y > 240) { doc.addPage(); y = 20; }
+                doc.setFontSize(14);
+                doc.text(`Fotos Etapa: ${s.toUpperCase()}`, 20, y); y += 10;
+                
+                let x = 20;
+                for (const imgData of o.fotos[s]) {
+                    if (x > 160) { x = 20; y += 55; }
+                    if (y > 240) { doc.addPage(); y = 20; x = 20; }
+                    try {
+                        doc.addImage(imgData, 'JPEG', x, y, 50, 50);
+                        x += 55;
+                    } catch (e) { console.error("Error al añadir imagen al PDF", e); }
+                }
+                y += 65;
+            }
+        }
+
+        doc.save(`Reporte_Obra_${o.dir.replace(/\s+/g, '_')}.pdf`);
     }
 
     async function cambiarEstado(id, nuevoEstado) {
