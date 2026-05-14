@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VeredasApp Pro</title>
     
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="vpv%20logo.jpeg">
@@ -58,7 +59,7 @@
 <body>
 
 <div class="app-shell">
-    <div class="screen" id="scr-login">
+    <div class="screen active" id="scr-login">
         <div class="container" style="text-align:center; padding-top:80px;">
             <img src="vpv%20logo.jpeg" alt="Logo de la empresa" style="width:70px; height:70px; border-radius:20px; margin-bottom:15px; object-fit: contain; background: var(--primary); padding: 5px;">
             <h1 style="margin-bottom:30px;">VeredasApp</h1>
@@ -310,8 +311,9 @@
     }
 
     function renderObrasCap() {
+        if (!currentUser) return;
         const cont = document.getElementById('lista-obras-cap');
-        const misObras = db.obras.filter(o => o.cap === currentUser.nom);
+        const misObras = db.obras.filter(o => o.cap === currentUser.nom || o.cap === currentUser.usr);
         cont.innerHTML = misObras.map(o => `
             <button class="obra-btn" onclick="verDetalle(${o.id})">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
