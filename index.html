@@ -116,9 +116,9 @@
 
 <script>
     // CONFIGURACIÓN SUPABASE (Reemplaza con tus credenciales)
-    const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
-    const SUPABASE_KEY = 'tu-anon-key';
-    const supabase = exports.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = 'https://bgbbztyfitetwjmxgawa.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnYmJ6dHlmaXRldHdqbXhnYXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NzA1MTMsImV4cCI6MjA5NDM0NjUxM30.JtjR5gAEzQYJY_rPf7km-30PDhSbVnNVeuyG4wcGSIc';
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let db = { obras: [], caps: [] };
     let currentUser = null;
@@ -128,18 +128,25 @@
         const u = document.getElementById('log-user').value;
         const p = document.getElementById('log-pass').value;
 
-        if(u === 'admin' && p === 'admin123') {
-            currentUser = { type: 'admin' };
-            await refreshData();
-            showScreen('scr-admin');
-        } else {
-            const { data: caps, error } = await supabase.from('caps').select('*').eq('usr', u).eq('pwd', p).single();
-            if(caps) {
-                currentUser = { type: 'cap', ...caps };
-                document.getElementById('cap-name-header').innerText = caps.nom;
+        try {
+            if(u === 'admin' && p === 'admin123') {
+                currentUser = { type: 'admin' };
                 await refreshData();
-                showScreen('scr-cap');
-            } else { alert("Acceso denegado"); }
+                showScreen('scr-admin');
+            } else {
+                const { data: cap, error } = await client.from('caps').select('*').eq('usr', u).eq('pwd', p).single();
+                if(cap) {
+                    currentUser = { type: 'cap', ...cap };
+                    document.getElementById('cap-name-header').innerText = cap.nom;
+                    await refreshData();
+                    showScreen('scr-cap');
+                } else { 
+                    alert("Acceso denegado: Usuario o contraseña incorrectos."); 
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error de conexión. Verifica que SUPABASE_URL y SUPABASE_KEY sean correctos.");
         }
     }
 
@@ -149,7 +156,7 @@
         const pwdEl = document.getElementById('c-pwd');
         if(!nomEl.value || !usrEl.value || !pwdEl.value) return;
 
-        await supabase.from('caps').insert([{ nom: nomEl.value, usr: usrEl.value, pwd: pwdEl.value }]);
+        await client.from('caps').insert([{ nom: nomEl.value, usr: usrEl.value, pwd: pwdEl.value }]);
         await refreshData();
         closeModal('mod-cap');
         nomEl.value = ''; usrEl.value = ''; pwdEl.value = '';
@@ -172,15 +179,15 @@
             f_inicio: finiEl.value || new Date().toISOString().split('T')[0]
         };
 
-        await supabase.from('obras').insert([nuevaObra]);
+        await client.from('obras').insert([nuevaObra]);
         await refreshData();
         closeModal('mod-obra'); 
         dirEl.value = ''; mtsEl.value = '';
     }
 
     async function refreshData() {
-        const { data: obras } = await supabase.from('obras').select('*');
-        const { data: caps } = await supabase.from('caps').select('*');
+        const { data: obras } = await client.from('obras').select('*');
+        const { data: caps } = await client.from('caps').select('*');
         db.obras = obras || [];
         db.caps = caps || [];
         if(currentUser?.type === 'admin') renderObras(); else renderObrasCap();
@@ -352,7 +359,7 @@
                     const o = db.obras.find(x => x.id === id);
                     o.fotos[currentFase].push(dataUrl);
                     
-                    supabase.from('obras').update({ fotos: o.fotos }).eq('id', id).then(() => {
+                    client.from('obras').update({ fotos: o.fotos }).eq('id', id).then(() => {
                         document.getElementById('loader').style.display = 'none';
                         switchPhotoTab(id, currentFase);
                     });
@@ -372,19 +379,19 @@
         let f_fin = o.f_fin;
         if (nuevoEstado === 'Terminada' && !f_fin) f_fin = new Date().toISOString().split('T')[0];
         
-        await supabase.from('obras').update({ estado: nuevoEstado, f_fin }).eq('id', id);
+        await client.from('obras').update({ estado: nuevoEstado, f_fin }).eq('id', id);
         await refreshData();
         verDetalle(id); // Refrescar para mostrar/ocultar fecha fin
     }
 
     async function cambiarFechaFin(id, nuevaFecha) {
-        await supabase.from('obras').update({ f_fin: nuevaFecha }).eq('id', id);
+        await client.from('obras').update({ f_fin: nuevaFecha }).eq('id', id);
         await refreshData();
     }
 
     async function eliminarObra(id) {
         if(confirm("¿Seguro quieres borrar esta obra y sus fotos?")) {
-            await supabase.from('obras').delete().eq('id', id);
+            await client.from('obras').delete().eq('id', id);
             await refreshData();
             back();
         }
