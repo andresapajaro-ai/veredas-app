@@ -98,14 +98,10 @@
             </div>
         </header>
         <div class="container">
-            <div class="dash-grid">
+            <div class="dash-grid" style="grid-template-columns: 1fr;">
                 <div class="dash-card" onclick="showScreen('scr-lista-obras')">
                     <i class="ti ti-settings"></i>
                     <span>Gestión de Obras y Personal</span>
-                </div>
-                <div class="dash-card" onclick="showScreen('scr-art')">
-                    <i class="ti ti-shield-check"></i>
-                    <span>ART / Seguros</span>
                 </div>
             </div>
         </div>
@@ -119,6 +115,7 @@
                 <button class="btn btn-primary" style="font-size: 13px;" onclick="openModal('mod-obra')">+ Obra</button>
                 <button class="btn btn-outline" style="margin-top: 0; font-size: 13px;" onclick="openModal('mod-cap')">+ Capataz</button>
             </div>
+            <button class="btn btn-outline" style="margin-top: 0; margin-bottom: 20px; font-size: 13px;" onclick="showScreen('scr-art')"><i class="ti ti-shield-check"></i> ART / Seguros</button>
             <h4 style="margin-bottom: 10px;">Listado de Obras</h4>
             <div id="lista-obras"></div>
         </div>
@@ -126,7 +123,7 @@
 
     <!-- Secciones Administrativas -->
     <div class="screen" id="scr-art">
-        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>ART / Seguros</strong> <div></div></header>
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-lista-obras')"></i> <strong>ART / Seguros</strong> <div></div></header>
         <div class="container">
             <p style="color:gray; font-size:13px; margin-bottom:15px;">Seleccione el mes para ver nóminas y pólizas:</p>
             <div class="dash-grid" id="meses-art"></div>
