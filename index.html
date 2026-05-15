@@ -34,6 +34,12 @@
 
         .obra-btn { background: white; border: 1px solid #e5e7eb; border-radius: var(--radius); padding: 18px; margin-bottom: 15px; text-align: left; cursor: pointer; width: 100%; }
         
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .dash-card { background: white; border: 1px solid #eee; padding: 20px; border-radius: var(--radius); text-align: center; cursor: pointer; transition: transform 0.1s; }
+        .dash-card:active { transform: scale(0.95); }
+        .dash-card i { font-size: 28px; color: var(--primary); margin-bottom: 8px; display: block; }
+        .dash-card span { font-size: 13px; font-weight: 600; }
+        
         .map-container { width: 100%; height: 180px; border-radius: var(--radius); overflow: hidden; margin: 15px 0; border: 1px solid #ddd; }
         .map-container iframe { width: 100%; height: 100%; border: 0; }
 
@@ -92,9 +98,76 @@
             </div>
         </header>
         <div class="container">
-            <button class="btn btn-primary" onclick="openModal('mod-obra')" style="margin-bottom:10px;">+ Nueva Obra</button>
-            <button class="btn btn-outline" onclick="openModal('mod-cap')" style="margin-bottom:20px;">+ Nuevo Capataz</button>
+            <div class="dash-grid">
+                <div class="dash-card" onclick="showScreen('scr-lista-obras')">
+                    <i class="ti ti-road"></i>
+                    <span>Obras</span>
+                </div>
+                <div class="dash-card" onclick="showScreen('scr-art')">
+                    <i class="ti ti-shield-check"></i>
+                    <span>ART / Seguros</span>
+                </div>
+                <div class="dash-card" onclick="showScreen('scr-nominas')">
+                    <i class="ti ti-receipt-2"></i>
+                    <span>Nóminas</span>
+                </div>
+                <div class="dash-card" onclick="showScreen('scr-vencimientos')">
+                    <i class="ti ti-calendar-event"></i>
+                    <span>Vencimientos</span>
+                </div>
+                <div class="dash-card" onclick="showScreen('scr-avisos')">
+                    <i class="ti ti-file-alert"></i>
+                    <span>Avisos Obra</span>
+                </div>
+                <div class="dash-card" onclick="openModal('mod-cap')">
+                    <i class="ti ti-users"></i>
+                    <span>Capataces</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nueva pantalla para lista de obras desde Admin -->
+    <div class="screen" id="scr-lista-obras">
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>Gestión de Obras</strong> <div></div></header>
+        <div class="container">
+            <button class="btn btn-primary" onclick="openModal('mod-obra')" style="margin-bottom:20px;">+ Nueva Obra</button>
             <div id="lista-obras"></div>
+        </div>
+    </div>
+
+    <!-- Secciones Administrativas -->
+    <div class="screen" id="scr-art">
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>ART y Seguros</strong> <div></div></header>
+        <div class="container">
+            <p style="color:gray; font-size:14px; margin-bottom:20px;">Control de cobertura vigente por capataz.</p>
+            <div id="lista-art"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="scr-nominas">
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>Nóminas</strong> <div></div></header>
+        <div class="container">
+            <p style="color:gray; font-size:14px; margin-bottom:20px;">Liquidaciones y recibos de sueldo.</p>
+            <div id="lista-nominas"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="scr-vencimientos">
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>Control de Vencimientos</strong> <div></div></header>
+        <div class="container">
+            <div style="background:#fff3cd; color:#854d0e; padding:15px; border-radius:var(--radius); margin-bottom:20px; font-size:14px;">
+                <i class="ti ti-alert-triangle"></i> Próximos vencimientos en los próximos 15 días.
+            </div>
+            <div id="lista-vencimientos"></div>
+        </div>
+    </div>
+
+    <div class="screen" id="scr-avisos">
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>Avisos de Obra</strong> <div></div></header>
+        <div class="container">
+            <p style="color:gray; font-size:14px; margin-bottom:20px;">Estado de trámites municipales y permisos.</p>
+            <div id="lista-avisos"></div>
         </div>
     </div>
 
@@ -192,7 +265,11 @@
             // Supabase manejará la redirección y el onAuthStateChange se encargará del resto.
         } catch (err) {
             console.error("Error al iniciar sesión con Google:", err);
-            alert("Error al iniciar sesión con Google: " + err.message);
+            if (err.message.includes("provider is not enabled")) {
+                alert("Error: El acceso con Google no está activado en el panel de Supabase.");
+            } else {
+                alert("Error al iniciar sesión con Google: " + err.message);
+            }
         }
     }
 
@@ -217,7 +294,11 @@
             alert("¡Magic Link enviado! Revisa tu email para acceder.");
         } catch (err) {
             console.error("Error al enviar Magic Link:", err);
-            alert("Error al enviar Magic Link: " + err.message);
+            if (err.message.includes("provider is not enabled")) {
+                alert("Error: El acceso por Magic Link (Email) no está activado en el panel de Supabase.");
+            } else {
+                alert("Error al enviar Magic Link: " + err.message);
+            }
         } finally {
             document.getElementById('loader').style.display = 'none';
         }
@@ -294,6 +375,55 @@
         } catch (err) {
             alert("Error al cargar datos de Supabase: " + err.message);
         }
+    }
+
+    function renderAdminModules() {
+        // Render ART
+        document.getElementById('lista-art').innerHTML = db.caps.map(c => `
+            <div class="obra-btn" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>${c.nom}</strong><br>
+                    <small style="color:green;">Certificado Vigente</small>
+                </div>
+                <i class="ti ti-file-check" style="font-size:20px; color:var(--primary);"></i>
+            </div>
+        `).join('') || '<p>No hay capataces registrados.</p>';
+
+        // Render Nominas (Mock)
+        document.getElementById('lista-nominas').innerHTML = db.caps.map(c => `
+            <div class="obra-btn" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>${c.nom}</strong><br>
+                    <small style="color:gray;">Periodo: ${new Date().toLocaleString('es-ES', { month: 'long' })}</small>
+                </div>
+                <button class="btn btn-primary" style="width:auto; padding:8px 12px; font-size:12px;">Ver Recibo</button>
+            </div>
+        `).join('');
+
+        // Render Vencimientos (Mock)
+        document.getElementById('lista-vencimientos').innerHTML = `
+            <div class="obra-btn" style="border-left: 4px solid red;">
+                <strong>Seguro Vehículo (AB-123-CD)</strong><br>
+                <small style="color:red;">Vence en 3 días (15/10/2023)</small>
+            </div>
+            <div class="obra-btn" style="border-left: 4px solid orange;">
+                <strong>Renovación ART General</strong><br>
+                <small style="color:orange;">Vence en 12 días (24/10/2023)</small>
+            </div>
+        `;
+
+        // Render Avisos Obra
+        document.getElementById('lista-avisos').innerHTML = db.obras.map(o => `
+            <div class="obra-btn" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>${o.dir}</strong><br>
+                    <small style="color:gray;">Expediente: ${Math.floor(Math.random() * 90000)}/23</small>
+                </div>
+                <span style="font-size:11px; padding:4px 8px; background:#e0f2fe; color:#0369a1; border-radius:5px; font-weight:700;">
+                    PRESENTADO
+                </span>
+            </div>
+        `).join('') || '<p>No hay avisos generados.</p>';
     }
 
     function renderObras() {
