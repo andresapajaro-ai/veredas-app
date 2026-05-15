@@ -218,7 +218,7 @@
 
         try {
             if(u === 'admin' && p === 'admin123') {
-                currentUser = { type: 'admin' };
+                currentUser = { type: 'admin', usr: 'admin', nom: 'Administrador' };
                 await refreshData();
                 showScreen('scr-admin');
             } else { // Manual capataz login from 'caps' table
@@ -389,7 +389,7 @@
     async function verMesArt(mes) {
         const detail = document.getElementById('detalle-mes-art');
         detail.style.display = 'block';
-        detail.innerHTML = `<h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">${mes}</h4><p style="font-size:12px; color:gray;">Cargando documentación...</p>`;
+        detail.innerHTML = `<h4 style="margin-bottom: 15px; color: var(--primary);">${mes}</h4><p style="font-size:12px; color:gray;">Cargando documentación...</p>`;
         detail.scrollIntoView({ behavior: 'smooth' });
 
         const tipos = [
@@ -398,14 +398,14 @@
         ];
 
         // Listamos los archivos existentes en la carpeta del mes
-        const { data: files } = await client.storage.from('FOTOS').list(`documentacion/${mes}`);
-        
-        let html = `<h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">${mes}</h4>`;
-        let html = `<h4 style="margin-bottom: 15px; color: var(--primary);">${mes}</h4>`;
-
-        tipos.forEach(t => {
-            const file = files?.find(f => f.name.startsWith(t.id));
-            const exists = !!file;
+         const { data: registros, error } = await client.from('Art').select('*').eq('mes', mes);
+         if (error) console.error("Error al consultar tabla Art:", error);
+ 
+         let html = `<h4 style="margin-bottom: 15px; color: var(--primary);">${mes}</h4>`;
+ 
+         tipos.forEach(t => {
+             const doc = registros?.find(r => r.tipo === t.id);
+            const exists = !!doc;
             
             html += `
                 <div class="obra-btn" style="padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
@@ -433,24 +433,29 @@
         const ext = file.name.split('.').pop();
         const filePath = `documentacion/${mes}/${tipo}.${ext}`;
 
-        // Subir a Storage
-        const { error: storageErr } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
-        if (storageErr) { alert("Error Storage: " + storageErr.message); return; }
+        try {
+            // Subir a Storage
+            const { error: storageErr } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
+            if (storageErr) throw storageErr;
 
-        // Obtener URL y guardar en tabla 'Art'
-        const { data: { publicUrl } } = client.storage.from('FOTOS').getPublicUrl(filePath);
-        
-        const { error: dbErr } = await client.from('Art').upsert({
-            mes: mes,
-            tipo: tipo,
-            path: filePath,
-            url: publicUrl,
-            creado_por: currentUser.usr
-        }, { onConflict: 'mes,tipo' }); // Requiere un índice único en mes y tipo
+            // Obtener URL y guardar en tabla 'Art'
+            const { data: { publicUrl } } = client.storage.from('FOTOS').getPublicUrl(filePath);
+            
+            const { error: dbErr } = await client.from('Art').upsert({
+                mes: mes,
+                tipo: tipo,
+                path: filePath,
+                url: publicUrl,
+                creado_por: currentUser.usr
+            }, { onConflict: 'mes,tipo' });
 
-        document.getElementById('loader').style.display = 'none';
-        if (dbErr) alert("Error Base de Datos: " + dbErr.message);
-        else verMesArt(mes);
+            if (dbErr) throw dbErr;
+            verMesArt(mes);
+        } catch (err) {
+            alert("Error al cargar documento: " + err.message);
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
     }
 
     async function execUploadGlobal() {
@@ -481,11 +486,6 @@
 
             if (dbErr) throw dbErr;
 
-            alert("Documento cargado correctamente en " + mes);
-            closeModal('mod-upload-doc');
-            fileInput.value = '';
-            if (document.getElementById('detalle-mes-art').style.display === 'block') verMesArt(mes);
-        } catch (err) {
             alert("Error al subir: " + err.message);
         } finally {
             document.getElementById('loader').style.display = 'none';
