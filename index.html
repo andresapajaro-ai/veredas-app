@@ -112,6 +112,9 @@
     <div class="screen" id="scr-art">
         <header><i class="ti ti-arrow-left" onclick="backToMain()"></i> <strong>ART / Seguros</strong> <div></div></header>
         <div class="container">
+            <div id="admin-doc-upload" style="display:none; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="openModal('mod-upload-doc')"><i class="ti ti-upload"></i> Cargar Documentación</button>
+            </div>
             <p style="color:gray; font-size:13px; margin-bottom:15px;">Seleccione el mes para ver nóminas y pólizas:</p>
             <div class="dash-grid" id="meses-art"></div>
             <div id="detalle-mes-art" style="margin-top: 20px; display: none; background: #f9fafb; padding: 15px; border-radius: var(--radius); border: 1px solid #eee;">
@@ -182,6 +185,20 @@
         <input type="password" id="c-pwd" placeholder="Contraseña">
         <button class="btn btn-primary" onclick="crearCap()">Guardar Capataz</button>
         <button class="btn btn-outline" onclick="closeModal('mod-cap')">Cancelar</button>
+    </div>
+</div>
+
+<div class="modal" id="mod-upload-doc">
+    <div class="modal-content">
+        <h3>Cargar Documentación ART</h3><br>
+        <select id="up-mes-sel"></select>
+        <select id="up-tipo-sel">
+            <option value="nomina">Nómina ART</option>
+            <option value="poliza">Póliza de Seguro</option>
+        </select>
+        <input type="file" id="up-file" accept=".pdf,image/*" style="margin-bottom: 15px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; width: 100%;">
+        <button class="btn btn-primary" onclick="execUploadGlobal()">Subir al Sistema</button>
+        <button class="btn btn-outline" onclick="closeModal('mod-upload-doc')">Cancelar</button>
     </div>
 </div>
 
@@ -355,6 +372,10 @@
 
     function renderAdminModules() {
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        if(currentUser && currentUser.type === 'admin') {
+            document.getElementById('admin-doc-upload').style.display = 'block';
+            document.getElementById('up-mes-sel').innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+        }
         document.getElementById('meses-art').innerHTML = meses.map(m => `
             <div class="dash-card" style="padding: 12px;" onclick="verMesArt('${m}')">
                 <span style="font-size: 12px;">${m}</span>
@@ -413,6 +434,31 @@
         document.getElementById('loader').style.display = 'none';
         if (error) alert("Error al subir: " + error.message);
         else verMesArt(mes);
+    }
+
+    async function execUploadGlobal() {
+        const mes = document.getElementById('up-mes-sel').value;
+        const tipo = document.getElementById('up-tipo-sel').value;
+        const fileInput = document.getElementById('up-file');
+        const file = fileInput.files[0];
+
+        if (!file) { alert("Por favor, seleccione un archivo."); return; }
+        document.getElementById('loader').style.display = 'block';
+        const ext = file.name.split('.').pop();
+        const filePath = `documentacion/${mes}/${tipo}.${ext}`;
+
+        try {
+            const { error } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
+            if (error) throw error;
+            alert("Documento cargado correctamente en " + mes);
+            closeModal('mod-upload-doc');
+            fileInput.value = '';
+            if (document.getElementById('detalle-mes-art').style.display === 'block') verMesArt(mes);
+        } catch (err) {
+            alert("Error al subir: " + err.message);
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
     }
 
     function viewDoc(mes, filename) {
