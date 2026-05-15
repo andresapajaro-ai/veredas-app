@@ -391,6 +391,8 @@
         const detail = document.getElementById('detalle-mes-art');
         detail.style.display = 'block';
         detail.innerHTML = `<h4 style="margin-bottom: 15px; color: var(--primary);">${mes}</h4><p style="font-size:12px; color:gray;">Cargando documentación...</p>`;
+        // Seteamos el HTML inicial incluyendo el ID nombre-mes para evitar errores de referencia
+        detail.innerHTML = `<h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">${mes}</h4><p style="font-size:12px; color:gray;">Cargando documentación...</p>`;
         detail.scrollIntoView({ behavior: 'smooth' });
 
         const tipos = [
@@ -402,6 +404,7 @@
         const { data: files } = await client.storage.from('FOTOS').list(`documentacion/${mes}`);
         
         let html = `<h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">${mes}</h4>`;
+        let html = `<h4 style="margin-bottom: 15px; color: var(--primary);">${mes}</h4>`;
 
         tipos.forEach(t => {
             const file = files?.find(f => f.name.startsWith(t.id));
@@ -414,10 +417,10 @@
                         <div><strong>${t.label}</strong><br><small style="color:${exists ? 'green':'red'};">${exists ? 'Disponible' : 'Sin cargar'}</small></div>
                     </div>
                     <div style="display: flex; gap: 5px;">
-                        ${exists ? `<button class="btn btn-primary" style="width:auto; padding: 8px 12px; font-size: 11px;" onclick="viewDoc('${mes}', '${file.name}')">Ver</button>` : ''}
+                        ${exists ? `<button class="btn btn-primary" style="width:auto; padding: 8px 12px; font-size: 11px;" onclick="window.open('${doc.url}', '_blank')">Ver</button>` : ''}
                         ${currentUser.type === 'admin' ? `
                             <button class="btn btn-outline" style="width:auto; padding: 8px 12px; font-size: 11px; margin-top:0;" onclick="document.getElementById('docInput').onchange = (e) => uploadDoc(e, '${mes}', '${t.id}'); document.getElementById('docInput').click();">${exists ? 'Cambiar' : 'Subir'}</button>
-                            ${exists ? `<i class="ti ti-trash" style="color:red; padding:8px; cursor:pointer;" onclick="deleteDoc('${mes}', '${file.name}')"></i>` : ''}
+                            ${exists ? `<i class="ti ti-trash" style="color:red; padding:8px; cursor:pointer;" onclick="deleteDoc('${mes}', '${doc.tipo}', '${doc.path}')"></i>` : ''}
                         ` : ''}
                     </div>
                 </div>
@@ -433,9 +436,23 @@
         const ext = file.name.split('.').pop();
         const filePath = `documentacion/${mes}/${tipo}.${ext}`;
 
-        const { error } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
+        // Subir a Storage
+        const { error: storageErr } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
+        if (storageErr) { alert("Error Storage: " + storageErr.message); return; }
+
+        // Obtener URL y guardar en tabla 'Art'
+        const { data: { publicUrl } } = client.storage.from('FOTOS').getPublicUrl(filePath);
+        
+        const { error: dbErr } = await client.from('Art').upsert({
+            mes: mes,
+            tipo: tipo,
+            path: filePath,
+            url: publicUrl,
+            creado_por: currentUser.usr
+        }, { onConflict: 'mes,tipo' }); // Requiere un índice único en mes y tipo
+
         document.getElementById('loader').style.display = 'none';
-        if (error) alert("Error al subir: " + error.message);
+        if (dbErr) alert("Error Base de Datos: " + dbErr.message);
         else verMesArt(mes);
     }
 
@@ -451,8 +468,22 @@
         const filePath = `documentacion/${mes}/${tipo}.${ext}`;
 
         try {
-            const { error } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
-            if (error) throw error;
+            // Subir archivo
+            const { error: storageErr } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
+            if (storageErr) throw storageErr;
+
+            // Obtener URL y registrar en tabla
+            const { data: { publicUrl } } = client.storage.from('FOTOS').getPublicUrl(filePath);
+            const { error: dbErr } = await client.from('Art').upsert({
+                mes: mes,
+                tipo: tipo,
+                path: filePath,
+                url: publicUrl,
+                creado_por: currentUser.usr
+            }, { onConflict: 'mes,tipo' });
+
+            if (dbErr) throw dbErr;
+
             alert("Documento cargado correctamente en " + mes);
             closeModal('mod-upload-doc');
             fileInput.value = '';
@@ -469,11 +500,11 @@
         window.open(data.publicUrl, '_blank');
     }
 
-    async function deleteDoc(mes, filename) {
+    async function deleteDoc(mes, tipo, path) {
         if (!confirm("¿Está seguro de eliminar este documento?")) return;
-        const { error } = await client.storage.from('FOTOS').remove([`documentacion/${mes}/${filename}`]);
-        if (error) alert("Error: " + error.message);
-        else verMesArt(mes);
+        await client.storage.from('FOTOS').remove([path]);
+        await client.from('Art').delete().eq('mes', mes).eq('tipo', tipo);
+        verMesArt(mes);
     }
 
     function renderObras() {
@@ -824,6 +855,7 @@
 
     function backToMain() {
         showScreen(currentUser.type === 'admin' ? 'scr-admin' : 'scr-cap');
+        showScreen(currentUser?.type === 'admin' ? 'scr-admin' : 'scr-cap');
     }
     function back() { 
         backToMain();
