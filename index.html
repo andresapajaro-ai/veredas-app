@@ -100,28 +100,12 @@
         <div class="container">
             <div class="dash-grid">
                 <div class="dash-card" onclick="showScreen('scr-lista-obras')">
-                    <i class="ti ti-road"></i>
-                    <span>Obras</span>
+                    <i class="ti ti-settings"></i>
+                    <span>Gestión de Obras y Personal</span>
                 </div>
                 <div class="dash-card" onclick="showScreen('scr-art')">
                     <i class="ti ti-shield-check"></i>
                     <span>ART / Seguros</span>
-                </div>
-                <div class="dash-card" onclick="showScreen('scr-nominas')">
-                    <i class="ti ti-receipt-2"></i>
-                    <span>Nóminas</span>
-                </div>
-                <div class="dash-card" onclick="showScreen('scr-vencimientos')">
-                    <i class="ti ti-calendar-event"></i>
-                    <span>Vencimientos</span>
-                </div>
-                <div class="dash-card" onclick="showScreen('scr-avisos')">
-                    <i class="ti ti-file-alert"></i>
-                    <span>Avisos Obra</span>
-                </div>
-                <div class="dash-card" onclick="openModal('mod-cap')">
-                    <i class="ti ti-users"></i>
-                    <span>Capataces</span>
                 </div>
             </div>
         </div>
@@ -129,19 +113,34 @@
 
     <!-- Nueva pantalla para lista de obras desde Admin -->
     <div class="screen" id="scr-lista-obras">
-        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>Gestión de Obras</strong> <div></div></header>
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>Obras y Personal</strong> <div></div></header>
         <div class="container">
-            <button class="btn btn-primary" onclick="openModal('mod-obra')" style="margin-bottom:20px;">+ Nueva Obra</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="btn btn-primary" style="font-size: 13px;" onclick="openModal('mod-obra')">+ Obra</button>
+                <button class="btn btn-outline" style="margin-top: 0; font-size: 13px;" onclick="openModal('mod-cap')">+ Capataz</button>
+            </div>
+            <h4 style="margin-bottom: 10px;">Listado de Obras</h4>
             <div id="lista-obras"></div>
         </div>
     </div>
 
     <!-- Secciones Administrativas -->
     <div class="screen" id="scr-art">
-        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>ART y Seguros</strong> <div></div></header>
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>ART / Seguros</strong> <div></div></header>
         <div class="container">
-            <p style="color:gray; font-size:14px; margin-bottom:20px;">Control de cobertura vigente por capataz.</p>
-            <div id="lista-art"></div>
+            <p style="color:gray; font-size:13px; margin-bottom:15px;">Seleccione el mes para ver nóminas y pólizas:</p>
+            <div class="dash-grid" id="meses-art"></div>
+            <div id="detalle-mes-art" style="margin-top: 20px; display: none; background: #f9fafb; padding: 15px; border-radius: var(--radius); border: 1px solid #eee;">
+                <h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">Mes</h4>
+                <div class="obra-btn" style="padding: 12px; display: flex; align-items: center; gap: 10px;">
+                    <i class="ti ti-users-group" style="color: var(--primary);"></i>
+                    <div><strong>Nómina ART</strong><br><small>Personal asegurado</small></div>
+                </div>
+                <div class="obra-btn" style="padding: 12px; display: flex; align-items: center; gap: 10px;">
+                    <i class="ti ti-file-certificate" style="color: var(--primary);"></i>
+                    <div><strong>Póliza de Seguro</strong><br><small>Comprobante de cobertura</small></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -378,52 +377,18 @@
     }
 
     function renderAdminModules() {
-        // Render ART
-        document.getElementById('lista-art').innerHTML = db.caps.map(c => `
-            <div class="obra-btn" style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong>${c.nom}</strong><br>
-                    <small style="color:green;">Certificado Vigente</small>
-                </div>
-                <i class="ti ti-file-check" style="font-size:20px; color:var(--primary);"></i>
-            </div>
-        `).join('') || '<p>No hay capataces registrados.</p>';
-
-        // Render Nominas (Mock)
-        document.getElementById('lista-nominas').innerHTML = db.caps.map(c => `
-            <div class="obra-btn" style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong>${c.nom}</strong><br>
-                    <small style="color:gray;">Periodo: ${new Date().toLocaleString('es-ES', { month: 'long' })}</small>
-                </div>
-                <button class="btn btn-primary" style="width:auto; padding:8px 12px; font-size:12px;">Ver Recibo</button>
+        const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        document.getElementById('meses-art').innerHTML = meses.map(m => `
+            <div class="dash-card" style="padding: 12px;" onclick="verMesArt('${m}')">
+                <span style="font-size: 12px;">${m}</span>
             </div>
         `).join('');
+    }
 
-        // Render Vencimientos (Mock)
-        document.getElementById('lista-vencimientos').innerHTML = `
-            <div class="obra-btn" style="border-left: 4px solid red;">
-                <strong>Seguro Vehículo (AB-123-CD)</strong><br>
-                <small style="color:red;">Vence en 3 días (15/10/2023)</small>
-            </div>
-            <div class="obra-btn" style="border-left: 4px solid orange;">
-                <strong>Renovación ART General</strong><br>
-                <small style="color:orange;">Vence en 12 días (24/10/2023)</small>
-            </div>
-        `;
-
-        // Render Avisos Obra
-        document.getElementById('lista-avisos').innerHTML = db.obras.map(o => `
-            <div class="obra-btn" style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong>${o.dir}</strong><br>
-                    <small style="color:gray;">Expediente: ${Math.floor(Math.random() * 90000)}/23</small>
-                </div>
-                <span style="font-size:11px; padding:4px 8px; background:#e0f2fe; color:#0369a1; border-radius:5px; font-weight:700;">
-                    PRESENTADO
-                </span>
-            </div>
-        `).join('') || '<p>No hay avisos generados.</p>';
+    function verMesArt(mes) {
+        document.getElementById('nombre-mes').innerText = mes;
+        document.getElementById('detalle-mes-art').style.display = 'block';
+        document.getElementById('detalle-mes-art').scrollIntoView({ behavior: 'smooth' });
     }
 
     function renderObras() {
