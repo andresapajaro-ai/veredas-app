@@ -365,6 +365,7 @@
             db.obras = obras || [];
             db.caps = caps || [];
             if(currentUser?.type === 'admin') renderObras(); else renderObrasCap();
+            renderAdminModules();
         } catch (err) {
             alert("Error al cargar datos de Supabase: " + err.message);
         }
@@ -375,6 +376,8 @@
         if(currentUser && currentUser.type === 'admin') {
             document.getElementById('admin-doc-upload').style.display = 'block';
             document.getElementById('up-mes-sel').innerHTML = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+        } else {
+            document.getElementById('admin-doc-upload').style.display = 'none';
         }
         document.getElementById('meses-art').innerHTML = meses.map(m => `
             <div class="dash-card" style="padding: 12px;" onclick="verMesArt('${m}')">
