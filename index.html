@@ -387,11 +387,8 @@
     }
 
     async function verMesArt(mes) {
-        document.getElementById('nombre-mes').innerText = mes;
         const detail = document.getElementById('detalle-mes-art');
         detail.style.display = 'block';
-        detail.innerHTML = `<h4 style="margin-bottom: 15px; color: var(--primary);">${mes}</h4><p style="font-size:12px; color:gray;">Cargando documentación...</p>`;
-        // Seteamos el HTML inicial incluyendo el ID nombre-mes para evitar errores de referencia
         detail.innerHTML = `<h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">${mes}</h4><p style="font-size:12px; color:gray;">Cargando documentación...</p>`;
         detail.scrollIntoView({ behavior: 'smooth' });
 
@@ -854,7 +851,6 @@
     }
 
     function backToMain() {
-        showScreen(currentUser.type === 'admin' ? 'scr-admin' : 'scr-cap');
         showScreen(currentUser?.type === 'admin' ? 'scr-admin' : 'scr-cap');
     }
     function back() { 
