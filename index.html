@@ -110,21 +110,13 @@
 
     <!-- Secciones Administrativas -->
     <div class="screen" id="scr-art">
-        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>ART / Seguros</strong> <div></div></header>
+        <header><i class="ti ti-arrow-left" onclick="backToMain()"></i> <strong>ART / Seguros</strong> <div></div></header>
         <div class="container">
             <p style="color:gray; font-size:13px; margin-bottom:15px;">Seleccione el mes para ver nóminas y pólizas:</p>
             <div class="dash-grid" id="meses-art"></div>
             <div id="detalle-mes-art" style="margin-top: 20px; display: none; background: #f9fafb; padding: 15px; border-radius: var(--radius); border: 1px solid #eee;">
-                <h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">Mes</h4>
-                <div class="obra-btn" style="padding: 12px; display: flex; align-items: center; gap: 10px;">
-                    <i class="ti ti-users-group" style="color: var(--primary);"></i>
-                    <div><strong>Nómina ART</strong><br><small>Personal asegurado</small></div>
-                </div>
-                <div class="obra-btn" style="padding: 12px; display: flex; align-items: center; gap: 10px;">
-                    <i class="ti ti-file-certificate" style="color: var(--primary);"></i>
-                    <div><strong>Póliza de Seguro</strong><br><small>Comprobante de cobertura</small></div>
-                </div>
             </div>
+            <input type="file" id="docInput" style="display:none" accept=".pdf,image/*">
         </div>
     </div>
 
@@ -157,7 +149,8 @@
     <div class="screen" id="scr-cap">
         <header><strong id="cap-name-header">Capataz</strong> <i class="ti ti-logout" onclick="logout()"></i></header>
         <div class="container">
-            <h3>Mis Obras Asignadas</h3><br>
+            <button class="btn btn-outline" style="margin-bottom: 20px; font-size: 13px;" onclick="showScreen('scr-art')"><i class="ti ti-shield-check"></i> ART / Seguros</button>
+            <h3 style="margin-bottom: 15px;">Mis Obras Asignadas</h3>
             <div id="lista-obras-cap"></div>
         </div>
     </div>
@@ -369,10 +362,69 @@
         `).join('');
     }
 
-    function verMesArt(mes) {
+    async function verMesArt(mes) {
         document.getElementById('nombre-mes').innerText = mes;
-        document.getElementById('detalle-mes-art').style.display = 'block';
-        document.getElementById('detalle-mes-art').scrollIntoView({ behavior: 'smooth' });
+        const detail = document.getElementById('detalle-mes-art');
+        detail.style.display = 'block';
+        detail.innerHTML = `<h4 style="margin-bottom: 15px; color: var(--primary);">${mes}</h4><p style="font-size:12px; color:gray;">Cargando documentación...</p>`;
+        detail.scrollIntoView({ behavior: 'smooth' });
+
+        const tipos = [
+            { id: 'nomina', label: 'Nómina ART', icon: 'ti-users-group' },
+            { id: 'poliza', label: 'Póliza de Seguro', icon: 'ti-file-certificate' }
+        ];
+
+        // Listamos los archivos existentes en la carpeta del mes
+        const { data: files } = await client.storage.from('FOTOS').list(`documentacion/${mes}`);
+        
+        let html = `<h4 id="nombre-mes" style="margin-bottom: 15px; color: var(--primary);">${mes}</h4>`;
+
+        tipos.forEach(t => {
+            const file = files?.find(f => f.name.startsWith(t.id));
+            const exists = !!file;
+            
+            html += `
+                <div class="obra-btn" style="padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="ti ${t.icon}" style="color: var(--primary); font-size: 20px;"></i>
+                        <div><strong>${t.label}</strong><br><small style="color:${exists ? 'green':'red'};">${exists ? 'Disponible' : 'Sin cargar'}</small></div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        ${exists ? `<button class="btn btn-primary" style="width:auto; padding: 8px 12px; font-size: 11px;" onclick="viewDoc('${mes}', '${file.name}')">Ver</button>` : ''}
+                        ${currentUser.type === 'admin' ? `
+                            <button class="btn btn-outline" style="width:auto; padding: 8px 12px; font-size: 11px; margin-top:0;" onclick="document.getElementById('docInput').onchange = (e) => uploadDoc(e, '${mes}', '${t.id}'); document.getElementById('docInput').click();">${exists ? 'Cambiar' : 'Subir'}</button>
+                            ${exists ? `<i class="ti ti-trash" style="color:red; padding:8px; cursor:pointer;" onclick="deleteDoc('${mes}', '${file.name}')"></i>` : ''}
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        detail.innerHTML = html;
+    }
+
+    async function uploadDoc(e, mes, tipo) {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('loader').style.display = 'block';
+        const ext = file.name.split('.').pop();
+        const filePath = `documentacion/${mes}/${tipo}.${ext}`;
+
+        const { error } = await client.storage.from('FOTOS').upload(filePath, file, { upsert: true });
+        document.getElementById('loader').style.display = 'none';
+        if (error) alert("Error al subir: " + error.message);
+        else verMesArt(mes);
+    }
+
+    function viewDoc(mes, filename) {
+        const { data } = client.storage.from('FOTOS').getPublicUrl(`documentacion/${mes}/${filename}`);
+        window.open(data.publicUrl, '_blank');
+    }
+
+    async function deleteDoc(mes, filename) {
+        if (!confirm("¿Está seguro de eliminar este documento?")) return;
+        const { error } = await client.storage.from('FOTOS').remove([`documentacion/${mes}/${filename}`]);
+        if (error) alert("Error: " + error.message);
+        else verMesArt(mes);
     }
 
     function renderObras() {
@@ -721,9 +773,11 @@
         }
     }
 
+    function backToMain() {
+        showScreen(currentUser.type === 'admin' ? 'scr-admin' : 'scr-cap');
+    }
     function back() { 
-        if(currentUser.type === 'admin') renderObras(); else renderObrasCap();
-        showScreen(currentUser.type === 'admin' ? 'scr-admin' : 'scr-cap'); 
+        backToMain();
     }
     function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     function openModal(id) { 
