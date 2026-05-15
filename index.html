@@ -91,25 +91,12 @@
 
     <div class="screen" id="scr-admin">
         <header>
-            <strong>Panel Admin</strong> 
+            <strong>Obras y Personal</strong> 
             <div style="display:flex; gap:15px; align-items:center;">
                 <a href="https://github.com/andresapajaro-ai/veredas-app" target="_blank" style="color:inherit; text-decoration:none;"><i class="ti ti-brand-github"></i></a>
                 <i class="ti ti-logout" onclick="location.reload()"></i>
             </div>
         </header>
-        <div class="container">
-            <div class="dash-grid" style="grid-template-columns: 1fr;">
-                <div class="dash-card" onclick="showScreen('scr-lista-obras')">
-                    <i class="ti ti-settings"></i>
-                    <span>Gestión de Obras y Personal</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Nueva pantalla para lista de obras desde Admin -->
-    <div class="screen" id="scr-lista-obras">
-        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>Obras y Personal</strong> <div></div></header>
         <div class="container">
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <button class="btn btn-primary" style="font-size: 13px;" onclick="openModal('mod-obra')">+ Obra</button>
@@ -123,7 +110,7 @@
 
     <!-- Secciones Administrativas -->
     <div class="screen" id="scr-art">
-        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-lista-obras')"></i> <strong>ART / Seguros</strong> <div></div></header>
+        <header><i class="ti ti-arrow-left" onclick="showScreen('scr-admin')"></i> <strong>ART / Seguros</strong> <div></div></header>
         <div class="container">
             <p style="color:gray; font-size:13px; margin-bottom:15px;">Seleccione el mes para ver nóminas y pólizas:</p>
             <div class="dash-grid" id="meses-art"></div>
